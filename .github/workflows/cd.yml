@@ -1,0 +1,235 @@
+name: Continuous Deployment
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  PYTHON_VERSION: "3.11"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging.healing-guard.terragonlabs.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to staging
+        env:
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+        run: |
+          echo "$STAGING_SSH_KEY" > staging_key.pem
+          chmod 600 staging_key.pem
+          
+          # Deploy using docker-compose
+          scp -i staging_key.pem -o StrictHostKeyChecking=no docker-compose.prod.yml $STAGING_USER@$STAGING_HOST:~/
+          ssh -i staging_key.pem -o StrictHostKeyChecking=no $STAGING_USER@$STAGING_HOST << 'EOF'
+            export IMAGE_TAG="${{ github.sha }}"
+            export ENVIRONMENT="staging"
+            docker-compose -f docker-compose.prod.yml pull
+            docker-compose -f docker-compose.prod.yml up -d
+            docker system prune -f
+          EOF
+
+      - name: Run health checks
+        run: |
+          sleep 60
+          curl -f https://staging.healing-guard.terragonlabs.com/health || exit 1
+
+      - name: Run smoke tests
+        run: |
+          poetry install --with test
+          poetry run pytest tests/smoke/ --base-url=https://staging.healing-guard.terragonlabs.com
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment:
+      name: production
+      url: https://healing-guard.terragonlabs.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Database backup
+        env:
+          PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+          PROD_HOST: ${{ secrets.PROD_HOST }}
+          PROD_USER: ${{ secrets.PROD_USER }}
+        run: |
+          echo "$PROD_SSH_KEY" > prod_key.pem
+          chmod 600 prod_key.pem
+          
+          ssh -i prod_key.pem -o StrictHostKeyChecking=no $PROD_USER@$PROD_HOST << 'EOF'
+            # Create database backup
+            docker exec postgres pg_dump -U healing_guard healing_guard > backup_$(date +%Y%m%d_%H%M%S).sql
+            
+            # Keep only last 7 backups
+            ls -t backup_*.sql | tail -n +8 | xargs rm -f
+          EOF
+
+      - name: Blue-Green Deployment
+        env:
+          PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+          PROD_HOST: ${{ secrets.PROD_HOST }}
+          PROD_USER: ${{ secrets.PROD_USER }}
+        run: |
+          ssh -i prod_key.pem -o StrictHostKeyChecking=no $PROD_USER@$PROD_HOST << 'EOF'
+            export IMAGE_TAG="${{ github.event.release.tag_name || github.sha }}"
+            export ENVIRONMENT="production"
+            
+            # Deploy to green environment
+            docker-compose -f docker-compose.green.yml pull
+            docker-compose -f docker-compose.green.yml up -d
+            
+            # Wait for green to be healthy
+            for i in {1..30}; do
+              if curl -f http://localhost:8001/health; then
+                break
+              fi
+              sleep 10
+            done
+            
+            # Switch traffic to green
+            docker-compose -f docker-compose.nginx.yml up -d
+            
+            # Wait and verify
+            sleep 30
+            if curl -f https://healing-guard.terragonlabs.com/health; then
+              # Stop blue environment
+              docker-compose -f docker-compose.prod.yml down
+              # Promote green to blue
+              mv docker-compose.green.yml docker-compose.prod.yml
+            else
+              echo "Health check failed, rolling back"
+              docker-compose -f docker-compose.prod.yml up -d
+              exit 1
+            fi
+          EOF
+
+      - name: Run production smoke tests
+        run: |
+          poetry install --with test
+          poetry run pytest tests/smoke/ --base-url=https://healing-guard.terragonlabs.com
+
+      - name: Update release status
+        if: success()
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/deployments \
+            -d '{"ref":"${{ github.sha }}","environment":"production","description":"Deployed via GitHub Actions"}'
+
+  rollback:
+    name: Rollback Production
+    runs-on: ubuntu-latest
+    if: failure() && needs.deploy-production.result == 'failure'
+    needs: [deploy-production]
+    environment:
+      name: production
+    
+    steps:
+      - name: Rollback production deployment
+        env:
+          PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+          PROD_HOST: ${{ secrets.PROD_HOST }}
+          PROD_USER: ${{ secrets.PROD_USER }}
+        run: |
+          echo "$PROD_SSH_KEY" > prod_key.pem
+          chmod 600 prod_key.pem
+          
+          ssh -i prod_key.pem -o StrictHostKeyChecking=no $PROD_USER@$PROD_HOST << 'EOF'
+            # Get previous image tag
+            PREVIOUS_TAG=$(docker images --format "table {{.Repository}}:{{.Tag}}" | grep healing-guard | sed -n '2p' | cut -d: -f2)
+            
+            # Rollback to previous version
+            export IMAGE_TAG="$PREVIOUS_TAG"
+            docker-compose -f docker-compose.prod.yml up -d
+            
+            # Verify rollback
+            sleep 30
+            curl -f https://healing-guard.terragonlabs.com/health
+          EOF
+
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    
+    steps:
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify PagerDuty on failure
+        if: failure()
+        run: |
+          curl -X POST https://events.pagerduty.com/v2/enqueue \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "routing_key": "${{ secrets.PAGERDUTY_ROUTING_KEY }}",
+              "event_action": "trigger",
+              "payload": {
+                "summary": "Deployment failed for healing-guard",
+                "severity": "critical",
+                "source": "GitHub Actions",
+                "custom_details": {
+                  "repository": "${{ github.repository }}",
+                  "workflow": "${{ github.workflow }}",
+                  "run_id": "${{ github.run_id }}"
+                }
+              }
+            }'

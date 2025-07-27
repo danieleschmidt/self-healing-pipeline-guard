@@ -1,0 +1,205 @@
+version: '3.8'
+
+services:
+  # Test database
+  postgres-test:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: healing_guard_test
+      POSTGRES_USER: healing_guard
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./tests/fixtures/sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U healing_guard -d healing_guard_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+
+  # Test Redis cache
+  redis-test:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --save ""
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    tmpfs:
+      - /data
+
+  # Mock external services for testing
+  mock-github:
+    image: wiremock/wiremock:latest
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./tests/fixtures/wiremock/github:/home/wiremock/mappings
+    command: ["--global-response-templating", "--verbose"]
+
+  mock-gitlab:
+    image: wiremock/wiremock:latest
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./tests/fixtures/wiremock/gitlab:/home/wiremock/mappings
+    command: ["--global-response-templating", "--verbose"]
+
+  mock-jenkins:
+    image: wiremock/wiremock:latest
+    ports:
+      - "8083:8080"
+    volumes:
+      - ./tests/fixtures/wiremock/jenkins:/home/wiremock/mappings
+    command: ["--global-response-templating", "--verbose"]
+
+  mock-slack:
+    image: wiremock/wiremock:latest
+    ports:
+      - "8084:8080"
+    volumes:
+      - ./tests/fixtures/wiremock/slack:/home/wiremock/mappings
+    command: ["--global-response-templating", "--verbose"]
+
+  # Test application
+  app-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      - ENVIRONMENT=testing
+      - DATABASE_URL=postgresql://healing_guard:test_password@postgres-test:5432/healing_guard_test
+      - REDIS_URL=redis://redis-test:6379/0
+      - GITHUB_API_URL=http://mock-github:8080
+      - GITLAB_API_URL=http://mock-gitlab:8080
+      - JENKINS_API_URL=http://mock-jenkins:8080
+      - SLACK_API_URL=http://mock-slack:8080
+      - LOG_LEVEL=DEBUG
+      - TESTING=true
+    ports:
+      - "8001:8000"
+    volumes:
+      - .:/app
+      - /app/.venv
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      mock-github:
+        condition: service_started
+      mock-gitlab:
+        condition: service_started
+      mock-jenkins:
+        condition: service_started
+      mock-slack:
+        condition: service_started
+    command: >
+      sh -c "
+        poetry run alembic upgrade head &&
+        poetry run uvicorn healing_guard.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Load testing with k6
+  k6:
+    image: grafana/k6:latest
+    volumes:
+      - ./tests/performance:/scripts
+    environment:
+      - BASE_URL=http://app-test:8000
+    depends_on:
+      app-test:
+        condition: service_healthy
+    profiles:
+      - performance
+
+  # Contract testing with Pact
+  pact-broker:
+    image: pactfoundation/pact-broker:latest
+    environment:
+      PACT_BROKER_DATABASE_URL: postgres://healing_guard:test_password@postgres-test:5432/healing_guard_test
+      PACT_BROKER_BASIC_AUTH_USERNAME: pact
+      PACT_BROKER_BASIC_AUTH_PASSWORD: pact
+    ports:
+      - "9292:9292"
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    profiles:
+      - contract
+
+  # Security scanning
+  security-scanner:
+    image: aquasec/trivy:latest
+    volumes:
+      - .:/app
+      - trivy_cache:/root/.cache/trivy
+    working_dir: /app
+    command: >
+      sh -c "
+        trivy fs --security-checks vuln,config,secret --format json --output /app/trivy-results.json . &&
+        trivy image --format json --output /app/trivy-image-results.json healing-guard:test
+      "
+    profiles:
+      - security
+
+  # Mutation testing
+  mutation-tester:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    volumes:
+      - .:/app
+      - /app/.venv
+    environment:
+      - DATABASE_URL=postgresql://healing_guard:test_password@postgres-test:5432/healing_guard_test
+      - REDIS_URL=redis://redis-test:6379/0
+      - TESTING=true
+    command: >
+      sh -c "
+        poetry run mutmut run --paths-to-mutate healing_guard/ &&
+        poetry run mutmut html
+      "
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    profiles:
+      - mutation
+
+  # Documentation testing
+  docs-linkchecker:
+    image: ghcr.io/tcort/markdown-link-check:stable
+    volumes:
+      - ./docs:/docs
+    working_dir: /docs
+    command: find . -name "*.md" -exec markdown-link-check {} \;
+    profiles:
+      - docs
+
+volumes:
+  postgres_test_data:
+    driver: local
+  trivy_cache:
+    driver: local
+
+networks:
+  default:
+    name: healing-guard-test
+    driver: bridge

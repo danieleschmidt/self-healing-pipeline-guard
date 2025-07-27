@@ -1,0 +1,150 @@
+name: 🐛 Bug Report
+description: Create a bug report to help us improve
+title: "[Bug]: "
+labels: ["bug", "triage"]
+assignees: ["@terragon-labs/maintainers"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report a bug! Please fill out this form with as much detail as possible.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Prerequisites
+      description: Please confirm the following before submitting your bug report.
+      options:
+        - label: I have searched for existing issues
+          required: true
+        - label: I have read the documentation
+          required: true
+        - label: I am using the latest version
+          required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Which version of the Self-Healing Pipeline Guard are you using?
+      placeholder: "e.g., v1.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      description: What environment are you running in?
+      options:
+        - Development
+        - Staging
+        - Production
+        - Local
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ci_platform
+    attributes:
+      label: CI/CD Platform
+      description: Which CI/CD platform are you using?
+      options:
+        - GitHub Actions
+        - GitLab CI
+        - Jenkins
+        - CircleCI
+        - Azure DevOps
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what happened!
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+      placeholder: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: A clear and concise description of what actually happened.
+      placeholder: What actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration
+      description: Please share your configuration (remove any sensitive information).
+      render: yaml
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here (screenshots, error messages, etc.).
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - Low - Minor issue
+        - Medium - Moderate impact
+        - High - Major impact
+        - Critical - System unusable
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: Impact Areas
+      description: Which areas does this bug affect?
+      options:
+        - label: Failure detection
+        - label: Healing strategies
+        - label: CI/CD integration
+        - label: Performance
+        - label: Security
+        - label: Documentation
+        - label: API
+        - label: UI/UX
+        - label: Configuration

@@ -1,0 +1,154 @@
+name: 🚀 Feature Request
+description: Suggest a new feature or enhancement
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+assignees: ["@terragon-labs/maintainers"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a new feature! Please describe your idea in detail.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Prerequisites
+      description: Please confirm the following before submitting your feature request.
+      options:
+        - label: I have searched for existing feature requests
+          required: true
+        - label: I have read the roadmap and documentation
+          required: true
+        - label: This feature aligns with the project's goals
+          required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      description: What category does this feature belong to?
+      options:
+        - Failure Detection
+        - Healing Strategies
+        - CI/CD Integration
+        - Machine Learning
+        - API Enhancement
+        - Security
+        - Performance
+        - Monitoring & Observability
+        - Documentation
+        - Developer Experience
+        - Cost Optimization
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a problem? Please describe the problem you're trying to solve.
+      placeholder: I'm always frustrated when...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see implemented.
+      placeholder: I would like to see...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Describe any alternative solutions or features you've considered.
+      placeholder: Alternatively, we could...
+
+  - type: textarea
+    id: use_cases
+    attributes:
+      label: Use Cases
+      description: Describe specific use cases for this feature.
+      placeholder: |
+        1. As a DevOps engineer, I want to...
+        2. When working with large teams...
+        3. In production environments...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Nice to have
+        - Would be helpful
+        - Important for my workflow
+        - Critical for adoption
+    validations:
+      required: true
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Estimated Complexity
+      description: How complex do you think this feature would be to implement?
+      options:
+        - Low - Simple configuration change
+        - Medium - New feature with moderate scope
+        - High - Complex feature requiring significant changes
+        - Unknown - Need more investigation
+
+  - type: checkboxes
+    id: platforms
+    attributes:
+      label: Target Platforms
+      description: Which CI/CD platforms should this feature support?
+      options:
+        - label: GitHub Actions
+        - label: GitLab CI
+        - label: Jenkins
+        - label: CircleCI
+        - label: Azure DevOps
+        - label: All platforms
+        - label: Platform agnostic
+
+  - type: textarea
+    id: technical_details
+    attributes:
+      label: Technical Implementation Details
+      description: If you have ideas about how this could be implemented technically, please share them.
+      placeholder: This could be implemented by...
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What would need to be true for this feature to be considered complete?
+      placeholder: |
+        - [ ] Feature works with GitHub Actions
+        - [ ] Configuration is documented
+        - [ ] Tests are included
+        - [ ] Performance impact is minimal
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context, mockups, or examples about the feature request here.
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Would you be interested in contributing to this feature?
+      options:
+        - label: I would like to work on this feature
+        - label: I can help with testing
+        - label: I can help with documentation
+        - label: I can provide feedback during development

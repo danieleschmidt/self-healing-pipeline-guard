@@ -1,0 +1,134 @@
+{
+  "branches": [
+    "main",
+    {
+      "name": "develop",
+      "prerelease": "beta"
+    },
+    {
+      "name": "release/*",
+      "prerelease": "rc"
+    }
+  ],
+  "repositoryUrl": "https://github.com/terragon-labs/self-healing-pipeline-guard.git",
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "releaseRules": [
+          {"type": "feat", "release": "minor"},
+          {"type": "fix", "release": "patch"},
+          {"type": "perf", "release": "patch"},
+          {"type": "revert", "release": "patch"},
+          {"type": "docs", "release": false},
+          {"type": "style", "release": false},
+          {"type": "chore", "release": false},
+          {"type": "refactor", "release": "patch"},
+          {"type": "test", "release": false},
+          {"type": "build", "release": false},
+          {"type": "ci", "release": false},
+          {"breaking": true, "release": "major"}
+        ],
+        "parserOpts": {
+          "noteKeywords": ["BREAKING CHANGE", "BREAKING CHANGES", "BREAKING"]
+        }
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits",
+        "parserOpts": {
+          "noteKeywords": ["BREAKING CHANGE", "BREAKING CHANGES", "BREAKING"]
+        },
+        "writerOpts": {
+          "commitsSort": ["subject", "scope"]
+        },
+        "presetConfig": {
+          "types": [
+            {"type": "feat", "section": "🚀 Features"},
+            {"type": "fix", "section": "🐛 Bug Fixes"},
+            {"type": "perf", "section": "⚡ Performance Improvements"},
+            {"type": "revert", "section": "⏪ Reverts"},
+            {"type": "docs", "section": "📚 Documentation", "hidden": false},
+            {"type": "style", "section": "💎 Styles", "hidden": true},
+            {"type": "chore", "section": "🔧 Maintenance", "hidden": true},
+            {"type": "refactor", "section": "♻️ Code Refactoring"},
+            {"type": "test", "section": "✅ Tests", "hidden": true},
+            {"type": "build", "section": "🏗️ Build System", "hidden": true},
+            {"type": "ci", "section": "👷 CI/CD", "hidden": true},
+            {"type": "security", "section": "🔒 Security"}
+          ]
+        }
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md",
+        "changelogTitle": "# Changelog\n\nAll notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines."
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "poetry version ${nextRelease.version} && poetry build",
+        "publishCmd": "poetry publish --username __token__ --password ${NPM_TOKEN}"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          {
+            "path": "dist/*.tar.gz",
+            "label": "Python Package (tar.gz)"
+          },
+          {
+            "path": "dist/*.whl",
+            "label": "Python Wheel"
+          },
+          {
+            "path": "CHANGELOG.md",
+            "label": "Changelog"
+          }
+        ],
+        "assignees": ["@terragon-labs/maintainers"],
+        "releasedLabels": ["released", "version:${nextRelease.version}"],
+        "addReleases": "bottom",
+        "draftRelease": false,
+        "successComment": "🎉 This ${issue.pull_request ? 'PR is included' : 'issue has been resolved'} in version [${nextRelease.version}](${releases.filter(release => /github\\.com/.test(release.url))[0].url}) 🎉",
+        "failComment": "❌ The release from branch `${branch.name}` failed due to the following errors:\n- ${errors.map(err => err.message).join('\\n- ')}",
+        "labels": false,
+        "discussionCategoryName": "Releases"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["CHANGELOG.md", "pyproject.toml"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    [
+      "@semantic-release/slack-webhook",
+      {
+        "notifyOnSuccess": true,
+        "notifyOnFail": true,
+        "onSuccessTemplate": {
+          "text": "✅ New version of Self-Healing Pipeline Guard released: $package_name@$npm_package_version\n\n🔗 <$repo_url/releases/tag/v$npm_package_version|View Release Notes>\n\n📦 <$repo_url|Repository>"
+        },
+        "onFailTemplate": {
+          "text": "❌ Release failed for Self-Healing Pipeline Guard\n\n🔗 <$repo_url/actions|View Build Logs>\n\nBranch: $branch\nCommit: $commit"
+        },
+        "packageName": "self-healing-pipeline-guard"
+      }
+    ]
+  ],
+  "preset": "conventionalcommits",
+  "tagFormat": "v${version}",
+  "ci": true,
+  "debug": false,
+  "dryRun": false
+}
