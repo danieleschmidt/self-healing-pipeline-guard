@@ -1,0 +1,67 @@
+[flake8]
+# Base flake8 configuration
+max-line-length = 88
+max-complexity = 10
+select = E,W,F,C
+ignore = 
+    # Black compatibility
+    E203,  # whitespace before ':'
+    E501,  # line too long (handled by black)
+    W503,  # line break before binary operator
+    # Additional ignores
+    E402,  # module level import not at top of file
+    F401,  # imported but unused (handled by isort)
+    C901,  # too complex (handled by complexity setting)
+
+# File patterns to exclude
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    .eggs,
+    *.egg,
+    build,
+    dist,
+    .tox,
+    migrations,
+    node_modules,
+    .pytest_cache,
+    .mypy_cache,
+    .ruff_cache
+
+# Per-file ignores
+per-file-ignores =
+    __init__.py:F401,E402
+    tests/*:S101,S106,S311,E501
+    migrations/*:E501
+    scripts/*:E501
+    docs/*:E501
+
+# Enable additional checks
+enable-extensions = G
+# G001: Logging format not lazy
+# G002: Logging format not lazy with extra parameters
+# G003: Logging format not lazy with format and extra parameters
+# G004: Logging format not lazy with f-string
+
+# Docstring conventions
+docstring-convention = google
+
+# Import order style
+import-order-style = google
+
+# Maximum allowed McCabe complexity
+max-complexity = 10
+
+# Error format
+format = %(path)s:%(row)d:%(col)d: %(code)s %(text)s
+
+# Show source code for errors
+show-source = True
+
+# Count errors and warnings
+count = True
+
+# Display statistics
+statistics = True

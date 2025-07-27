@@ -1,0 +1,50 @@
+# ZAP Scanning Rules for Self-Healing Pipeline Guard
+# Format: IGNORE|FAIL	RULE_ID	URL_REGEX	PARAMETER	STRENGTH
+
+# Ignore health check endpoints from certain security checks
+IGNORE	10026	http://localhost:8000/health.*		
+IGNORE	10027	http://localhost:8000/metrics.*		
+
+# Ignore authentication errors on public endpoints
+IGNORE	10008	http://localhost:8000/docs.*		
+IGNORE	10008	http://localhost:8000/redoc.*		
+IGNORE	10008	http://localhost:8000/openapi.json.*		
+
+# Fail on SQL injection attempts
+FAIL	40018	.*		HIGH
+FAIL	40019	.*		HIGH
+FAIL	40020	.*		HIGH
+
+# Fail on XSS vulnerabilities
+FAIL	40012	.*		HIGH
+FAIL	40014	.*		HIGH
+FAIL	40016	.*		HIGH
+FAIL	40017	.*		HIGH
+
+# Fail on authentication bypass
+FAIL	10010	.*		HIGH
+FAIL	10011	.*		HIGH
+
+# Fail on sensitive data exposure
+FAIL	10024	.*		HIGH
+FAIL	10025	.*		HIGH
+
+# Ignore low-risk issues on static content
+IGNORE	10020	http://localhost:8000/static/.*		LOW
+IGNORE	10021	http://localhost:8000/static/.*		LOW
+
+# Fail on CSRF vulnerabilities
+FAIL	10202	.*		MEDIUM
+
+# Ignore X-Frame-Options on API endpoints (not applicable)
+IGNORE	10020	http://localhost:8000/api/.*		
+
+# Fail on directory traversal
+FAIL	6	.*		HIGH
+
+# Fail on remote file inclusion
+FAIL	7	.*		HIGH
+
+# Custom rules for API security
+FAIL	90001	http://localhost:8000/api/.*	Authorization	HIGH
+FAIL	90002	http://localhost:8000/webhooks/.*	X-Hub-Signature.*	HIGH

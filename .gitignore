@@ -205,3 +205,122 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project specific files
+logs/
+tmp/
+temp/
+data/
+exports/
+uploads/
+downloads/
+cache/
+.cache/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Redis
+dump.rdb
+
+# Docker
+.dockerignore
+
+# Kubernetes
+*.kubeconfig
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Secrets and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets.yaml
+secrets.yml
+.secrets
+.env.*
+
+# ML/AI specific
+models/
+checkpoints/
+runs/
+wandb/
+mlruns/
+.neptune/
+.comet.ml/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor specific
+.idea/
+*.swp
+*.swo
+*~
+
+# Node.js (for frontend tooling)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.npm
+.yarn-integrity
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Runtime files
+*.pid
+*.sock
+
+# Application specific
+healing_guard.log
+pipeline_events.json
+metrics_export.csv
+
+# Temporary migration files
+migration_backup/
+
+# Local configuration overrides
+local_config.py
+local_settings.py
+
+# SSL certificates (local development)
+cert.pem
+key.pem
+
+# Performance and monitoring
+.locust/
+*.pcap
+
+# Cloud provider credentials
+.aws/
+.gcp/
+.azure/
+
+# Container volumes
+postgres_data/
+redis_data/
+prometheus_data/
+grafana_data/
+
+# Local development overrides
+docker-compose.override.yml
+local.env

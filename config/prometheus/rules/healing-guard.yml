@@ -1,0 +1,273 @@
+# Prometheus alerting rules for Self-Healing Pipeline Guard
+groups:
+  - name: healing_guard.rules
+    interval: 30s
+    rules:
+      # High-level service health
+      - alert: ServiceDown
+        expr: up{job="healing-guard-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: healing-guard
+        annotations:
+          summary: "Healing Guard API is down"
+          description: "The Healing Guard API has been down for more than 1 minute"
+
+      - alert: WorkerDown
+        expr: up{job="healing-guard-worker"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: healing-guard
+        annotations:
+          summary: "Healing Guard worker is down"
+          description: "The Healing Guard background worker has been down for more than 2 minutes"
+
+      # API Performance
+      - alert: HighAPILatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="healing-guard-api"}[5m])) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          service: healing-guard
+        annotations:
+          summary: "High API response time"
+          description: "95th percentile response time is {{ $value }}s for more than 5 minutes"
+
+      - alert: CriticalAPILatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="healing-guard-api"}[5m])) > 5.0
+        for: 2m
+        labels:
+          severity: critical
+          service: healing-guard
+        annotations:
+          summary: "Critical API response time"
+          description: "95th percentile response time is {{ $value }}s for more than 2 minutes"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{job="healing-guard-api",status=~"5.."}[5m]) / rate(http_requests_total{job="healing-guard-api"}[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: warning
+          service: healing-guard
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for more than 3 minutes"
+
+      - alert: CriticalErrorRate
+        expr: rate(http_requests_total{job="healing-guard-api",status=~"5.."}[5m]) / rate(http_requests_total{job="healing-guard-api"}[5m]) > 0.20
+        for: 1m
+        labels:
+          severity: critical
+          service: healing-guard
+        annotations:
+          summary: "Critical error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for more than 1 minute"
+
+      # Healing-specific metrics
+      - alert: LowHealingSuccessRate
+        expr: rate(healing_attempts_total{status="success"}[1h]) / rate(healing_attempts_total[1h]) < 0.70
+        for: 10m
+        labels:
+          severity: warning
+          service: healing-guard
+        annotations:
+          summary: "Low healing success rate"
+          description: "Healing success rate is {{ $value | humanizePercentage }} over the last hour"
+
+      - alert: CriticalHealingSuccessRate
+        expr: rate(healing_attempts_total{status="success"}[1h]) / rate(healing_attempts_total[1h]) < 0.50
+        for: 5m
+        labels:
+          severity: critical
+          service: healing-guard
+        annotations:
+          summary: "Critical healing success rate"
+          description: "Healing success rate is {{ $value | humanizePercentage }} over the last hour"
+
+      - alert: HighFailureDetectionTime
+        expr: histogram_quantile(0.95, rate(failure_detection_duration_seconds_bucket[10m])) > 60
+        for: 15m
+        labels:
+          severity: warning
+          service: healing-guard
+        annotations:
+          summary: "High failure detection time"
+          description: "95th percentile failure detection time is {{ $value }}s"
+
+      - alert: HealingBacklog
+        expr: healing_queue_length > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: healing-guard
+        annotations:
+          summary: "High healing queue backlog"
+          description: "Healing queue has {{ $value }} pending items"
+
+      # Resource usage
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes{job="healing-guard-api"} / process_virtual_memory_max_bytes > 0.80
+        for: 10m
+        labels:
+          severity: warning
+          service: healing-guard
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is at {{ $value | humanizePercentage }}"
+
+      - alert: CriticalMemoryUsage
+        expr: process_resident_memory_bytes{job="healing-guard-api"} / process_virtual_memory_max_bytes > 0.95
+        for: 2m
+        labels:
+          severity: critical
+          service: healing-guard
+        annotations:
+          summary: "Critical memory usage"
+          description: "Memory usage is at {{ $value | humanizePercentage }}"
+
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total{job="healing-guard-api"}[5m]) > 0.80
+        for: 10m
+        labels:
+          severity: warning
+          service: healing-guard
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is at {{ $value | humanizePercentage }}"
+
+      # Database connectivity
+      - alert: DatabaseConnectionFailure
+        expr: database_connections_active / database_connections_max > 0.90
+        for: 5m
+        labels:
+          severity: warning
+          service: healing-guard
+        annotations:
+          summary: "High database connection usage"
+          description: "Database connection pool is {{ $value | humanizePercentage }} full"
+
+      - alert: DatabaseQueryLatency
+        expr: histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m])) > 5.0
+        for: 5m
+        labels:
+          severity: warning
+          service: healing-guard
+        annotations:
+          summary: "High database query latency"
+          description: "95th percentile database query time is {{ $value }}s"
+
+      # Redis connectivity
+      - alert: RedisConnectionFailure
+        expr: redis_connected_clients / redis_maxclients > 0.90
+        for: 5m
+        labels:
+          severity: warning
+          service: healing-guard
+        annotations:
+          summary: "High Redis connection usage"
+          description: "Redis connection usage is {{ $value | humanizePercentage }}"
+
+      # ML Model performance
+      - alert: MLModelInferenceLatency
+        expr: histogram_quantile(0.95, rate(ml_inference_duration_seconds_bucket[10m])) > 10.0
+        for: 5m
+        labels:
+          severity: warning
+          service: healing-guard
+        annotations:
+          summary: "High ML model inference latency"
+          description: "95th percentile ML inference time is {{ $value }}s"
+
+      - alert: MLModelAccuracyDrop
+        expr: ml_model_accuracy < 0.70
+        for: 10m
+        labels:
+          severity: warning
+          service: healing-guard
+        annotations:
+          summary: "ML model accuracy drop"
+          description: "ML model accuracy has dropped to {{ $value | humanizePercentage }}"
+
+      # Business metrics
+      - alert: HighFailureRate
+        expr: rate(pipeline_failures_total[1h]) > 10
+        for: 15m
+        labels:
+          severity: info
+          service: healing-guard
+        annotations:
+          summary: "High pipeline failure rate"
+          description: "Pipeline failure rate is {{ $value }} failures per second over the last hour"
+
+      - alert: LowHealingCoverage
+        expr: (rate(healing_attempts_total[1h]) / rate(pipeline_failures_total[1h])) < 0.80
+        for: 30m
+        labels:
+          severity: warning
+          service: healing-guard
+        annotations:
+          summary: "Low healing coverage"
+          description: "Only {{ $value | humanizePercentage }} of failures are being attempted for healing"
+
+      # Cost alerts
+      - alert: HighHealingCost
+        expr: healing_cost_total > 100
+        for: 1h
+        labels:
+          severity: warning
+          service: healing-guard
+        annotations:
+          summary: "High healing costs"
+          description: "Healing costs have exceeded ${{ $value }} in the last hour"
+
+      # Security alerts
+      - alert: UnauthorizedAPIAccess
+        expr: rate(http_requests_total{status="401"}[5m]) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: healing-guard
+          category: security
+        annotations:
+          summary: "High rate of unauthorized API access"
+          description: "Unauthorized access rate is {{ $value }} requests per second"
+
+      - alert: RateLimitingTriggered
+        expr: rate(http_requests_total{status="429"}[5m]) > 5
+        for: 1m
+        labels:
+          severity: info
+          service: healing-guard
+        annotations:
+          summary: "Rate limiting frequently triggered"
+          description: "Rate limiting triggered {{ $value }} times per second"
+
+  # Recording rules for dashboards
+  - name: healing_guard.recording
+    interval: 30s
+    rules:
+      - record: healing_guard:request_rate
+        expr: rate(http_requests_total{job="healing-guard-api"}[5m])
+
+      - record: healing_guard:error_rate
+        expr: rate(http_requests_total{job="healing-guard-api",status=~"5.."}[5m]) / rate(http_requests_total{job="healing-guard-api"}[5m])
+
+      - record: healing_guard:response_time_95p
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="healing-guard-api"}[5m]))
+
+      - record: healing_guard:healing_success_rate_1h
+        expr: rate(healing_attempts_total{status="success"}[1h]) / rate(healing_attempts_total[1h])
+
+      - record: healing_guard:failure_detection_time_95p
+        expr: histogram_quantile(0.95, rate(failure_detection_duration_seconds_bucket[10m]))
+
+      - record: healing_guard:active_healings
+        expr: healing_queue_length + healing_in_progress_total
+
+      - record: healing_guard:cost_per_hour
+        expr: rate(healing_cost_total[1h]) * 3600
+
+      - record: healing_guard:throughput
+        expr: rate(webhook_events_total[5m])
