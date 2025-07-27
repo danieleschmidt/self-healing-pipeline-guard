@@ -1,0 +1,89 @@
+# YAML Lint Configuration
+# See https://yamllint.readthedocs.io/en/stable/configuration.html
+
+extends: default
+
+rules:
+  # Line length
+  line-length:
+    max: 120
+    level: warning
+
+  # Indentation
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
+  # Comments
+  comments:
+    min-spaces-from-content: 1
+
+  # Comments indentation
+  comments-indentation: enable
+
+  # Document separators
+  document-start:
+    present: false
+
+  # Empty lines
+  empty-lines:
+    max: 2
+    max-start: 0
+    max-end: 1
+
+  # Empty values
+  empty-values:
+    forbid-in-block-mappings: true
+    forbid-in-flow-mappings: true
+
+  # Floating values
+  float-values:
+    require-numeral-before-decimal: true
+
+  # Hyphens
+  hyphens:
+    max-spaces-after: 1
+
+  # Key duplicates
+  key-duplicates: enable
+
+  # Key ordering
+  key-ordering: disable
+
+  # New line at end of file
+  new-line-at-end-of-file: enable
+
+  # Octal values
+  octal-values:
+    forbid-implicit-octal: true
+
+  # Quoted strings
+  quoted-strings:
+    quote-type: any
+    required: only-when-needed
+
+  # Trailing spaces
+  trailing-spaces: enable
+
+  # Truthy values
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no']
+    check-keys: true
+
+ignore: |
+  .venv/
+  venv/
+  node_modules/
+  .git/
+  __pycache__/
+  .pytest_cache/
+  .mypy_cache/
+  .ruff_cache/
+  build/
+  dist/
+  *.egg-info/
+  .tox/
+  .coverage
+  htmlcov/
+  docs/_build/
