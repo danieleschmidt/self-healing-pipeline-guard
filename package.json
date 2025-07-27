@@ -1,0 +1,98 @@
+{
+  "name": "self-healing-pipeline-guard",
+  "version": "1.0.0",
+  "description": "AI-powered CI/CD guardian that automatically detects, diagnoses, and fixes pipeline failures",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "release": "semantic-release",
+    "release:dry": "semantic-release --dry-run",
+    "build:docs": "mkdocs build",
+    "serve:docs": "mkdocs serve",
+    "lint:docs": "markdownlint docs/",
+    "format:docs": "prettier --write 'docs/**/*.md'",
+    "test:links": "markdown-link-check docs/**/*.md"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/terragon-labs/self-healing-pipeline-guard.git"
+  },
+  "keywords": [
+    "ci-cd",
+    "devops",
+    "automation",
+    "ml",
+    "pipeline",
+    "healing",
+    "reliability",
+    "monitoring"
+  ],
+  "author": "Terragon Labs <info@terragonlabs.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/terragon-labs/self-healing-pipeline-guard/issues"
+  },
+  "homepage": "https://github.com/terragon-labs/self-healing-pipeline-guard#readme",
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^11.1.0",
+    "@semantic-release/exec": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^9.2.1",
+    "@semantic-release/release-notes-generator": "^12.1.0",
+    "@semantic-release/slack-webhook": "^2.2.0",
+    "conventional-changelog-conventionalcommits": "^7.0.2",
+    "markdown-link-check": "^3.11.2",
+    "markdownlint-cli": "^0.37.0",
+    "prettier": "^3.1.1",
+    "semantic-release": "^22.0.8"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "release": {
+    "branches": [
+      "main",
+      {
+        "name": "develop",
+        "prerelease": "beta"
+      },
+      {
+        "name": "release/*",
+        "prerelease": "rc"
+      }
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ],
+    "rules": {
+      "type-enum": [
+        2,
+        "always",
+        [
+          "feat",
+          "fix",
+          "docs",
+          "style",
+          "refactor",
+          "perf",
+          "test",
+          "build",
+          "ci",
+          "chore",
+          "revert"
+        ]
+      ],
+      "subject-case": [
+        2,
+        "never",
+        ["sentence-case", "start-case", "pascal-case", "upper-case"]
+      ],
+      "subject-empty": [2, "never"],
+      "subject-full-stop": [2, "never", "."],
+      "header-max-length": [2, "always", 72]
+    }
+  }
+}

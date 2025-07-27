@@ -1,0 +1,231 @@
+# MkDocs configuration for Self-Healing Pipeline Guard documentation
+site_name: Self-Healing Pipeline Guard
+site_description: AI-powered CI/CD guardian that automatically detects, diagnoses, and fixes pipeline failures
+site_author: Terragon Labs
+site_url: https://docs.terragonlabs.com/healing-guard
+
+# Repository
+repo_name: terragon-labs/self-healing-pipeline-guard
+repo_url: https://github.com/terragon-labs/self-healing-pipeline-guard
+
+# Copyright
+copyright: Copyright &copy; 2025 Terragon Labs
+
+# Configuration
+theme:
+  name: material
+  custom_dir: docs/overrides
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.tabs.link
+    - content.tooltips
+    - header.autohide
+    - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  favicon: assets/favicon.png
+  logo: assets/logo.png
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - minify:
+      minify_html: true
+  - git-revision-date-localized:
+      enable_creation_date: true
+  - git-committers:
+      repository: terragon-labs/self-healing-pipeline-guard
+      branch: main
+  - mermaid2:
+      arguments:
+        theme: |
+          ^(auto|dark|default|forest|neutral)$
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            merge_init_into_class: true
+            show_submodules: false
+  - awesome-pages
+  - macros
+  - redirects:
+      redirect_maps:
+        'index.md': 'getting-started/overview.md'
+
+# Customization
+extra:
+  analytics:
+    provider: google
+    property: !ENV GOOGLE_ANALYTICS_KEY
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/terragon-labs
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/r/terragonlabs/healing-guard
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/terragonlabs
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/company/terragon-labs
+  version:
+    provider: mike
+  consent:
+    title: Cookie consent
+    description: >- 
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.
+
+# Extensions
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:materialx.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: terragon-labs
+      repo: self-healing-pipeline-guard
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Page tree
+nav:
+  - Home:
+    - getting-started/index.md
+    - Overview: getting-started/overview.md
+    - Quick Start: getting-started/quickstart.md
+    - Installation: getting-started/installation.md
+    - Configuration: getting-started/configuration.md
+  
+  - User Guide:
+    - user-guide/index.md
+    - Platform Integration:
+      - GitHub Actions: user-guide/platforms/github.md
+      - GitLab CI: user-guide/platforms/gitlab.md
+      - Jenkins: user-guide/platforms/jenkins.md
+      - CircleCI: user-guide/platforms/circleci.md
+    - Healing Strategies:
+      - Overview: user-guide/strategies/overview.md
+      - Flaky Tests: user-guide/strategies/flaky-tests.md
+      - Resource Issues: user-guide/strategies/resource-issues.md
+      - Dependency Problems: user-guide/strategies/dependencies.md
+      - Custom Strategies: user-guide/strategies/custom.md
+    - Monitoring: user-guide/monitoring.md
+    - Cost Management: user-guide/cost-management.md
+  
+  - API Reference:
+    - api/index.md
+    - Authentication: api/authentication.md
+    - Webhooks: api/webhooks.md
+    - Healing: api/healing.md
+    - Metrics: api/metrics.md
+    - Admin: api/admin.md
+  
+  - Deployment:
+    - deployment/index.md
+    - Docker: deployment/docker.md
+    - Kubernetes: deployment/kubernetes.md
+    - Cloud Providers:
+      - AWS: deployment/cloud/aws.md
+      - GCP: deployment/cloud/gcp.md
+      - Azure: deployment/cloud/azure.md
+    - Security: deployment/security.md
+    - Monitoring: deployment/monitoring.md
+  
+  - Development:
+    - development/index.md
+    - Architecture: development/architecture.md
+    - Contributing: development/contributing.md
+    - Testing: development/testing.md
+    - ML Models: development/ml-models.md
+    - Plugin Development: development/plugins.md
+  
+  - Operations:
+    - operations/index.md
+    - Runbooks: operations/runbooks/
+    - Troubleshooting: operations/troubleshooting.md
+    - Performance Tuning: operations/performance.md
+    - Backup & Recovery: operations/backup.md
+    - Upgrading: operations/upgrading.md
+  
+  - Reference:
+    - reference/index.md
+    - Configuration Reference: reference/configuration.md
+    - Environment Variables: reference/environment.md
+    - Metrics Reference: reference/metrics.md
+    - Error Codes: reference/error-codes.md
+    - Changelog: reference/changelog.md
+
+# Extra CSS and JS
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - javascripts/extra.js

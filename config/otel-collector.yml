@@ -1,0 +1,192 @@
+# OpenTelemetry Collector configuration for Self-Healing Pipeline Guard
+# Collects traces, metrics, and logs from the application
+
+receivers:
+  # OTLP receiver for application telemetry
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Prometheus receiver for scraping metrics
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'healing-guard-metrics'
+          scrape_interval: 30s
+          static_configs:
+            - targets: ['app:8000']
+          metrics_path: '/metrics'
+
+  # Jaeger receiver for legacy trace data
+  jaeger:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:14250
+      thrift_http:
+        endpoint: 0.0.0.0:14268
+
+  # Filelog receiver for application logs
+  filelog:
+    include:
+      - /var/log/healing-guard/*.log
+    operators:
+      - type: json_parser
+        timestamp:
+          parse_from: attributes.timestamp
+          layout: '%Y-%m-%d %H:%M:%S'
+      - type: severity_parser
+        parse_from: attributes.level
+        mapping:
+          debug: debug
+          info: info
+          warn: warn
+          error: error
+          fatal: fatal
+
+  # Docker stats receiver
+  docker_stats:
+    endpoint: unix:///var/run/docker.sock
+    collection_interval: 30s
+    timeout: 10s
+
+processors:
+  # Batch processor for efficient data transmission
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    limit_mib: 256
+    spike_limit_mib: 64
+
+  # Resource processor to add metadata
+  resource:
+    attributes:
+      - key: service.name
+        value: healing-guard
+        action: upsert
+      - key: service.version
+        from_attribute: version
+        action: upsert
+      - key: deployment.environment
+        from_attribute: environment
+        action: upsert
+
+  # Probabilistic sampler for traces
+  probabilistic_sampler:
+    sampling_percentage: 10.0
+
+  # Attributes processor for enrichment
+  attributes/healing_guard:
+    actions:
+      - key: healing.platform
+        from_attribute: platform
+        action: upsert
+      - key: healing.repository
+        from_attribute: repository
+        action: upsert
+      - key: healing.strategy
+        from_attribute: strategy
+        action: upsert
+
+  # Filter processor to exclude health check endpoints
+  filter/health:
+    traces:
+      span:
+        - 'attributes["http.route"] == "/health"'
+        - 'attributes["http.route"] == "/metrics"'
+
+  # Transform processor for custom metrics
+  transform/healing_metrics:
+    metric_statements:
+      - context: metric
+        statements:
+          - set(description, "Healing Guard custom metrics") where name == "healing_*"
+
+exporters:
+  # Jaeger exporter for traces
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+
+  # Prometheus exporter for metrics
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: healing_guard
+
+  # Logging exporter for debugging
+  logging:
+    loglevel: info
+    sampling_initial: 2
+    sampling_thereafter: 500
+
+  # OTLP exporter for cloud providers (optional)
+  # otlp/cloud:
+  #   endpoint: https://api.honeycomb.io
+  #   headers:
+  #     "x-honeycomb-team": "${HONEYCOMB_API_KEY}"
+
+  # Elasticsearch exporter for logs
+  elasticsearch:
+    endpoints:
+      - http://elasticsearch:9200
+    index: healing-guard-logs
+    logs_index: healing-guard-logs
+    pipeline: healing-guard-pipeline
+    mapping:
+      mode: ecs
+
+  # File exporter for backup
+  file/traces:
+    path: /tmp/traces.json
+  file/metrics:
+    path: /tmp/metrics.json
+  file/logs:
+    path: /tmp/logs.json
+
+extensions:
+  # Health check extension
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+  # pprof extension for profiling
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+  # zpages extension for debugging
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+service:
+  extensions: [health_check, pprof, zpages]
+  
+  pipelines:
+    # Traces pipeline
+    traces:
+      receivers: [otlp, jaeger]
+      processors: [memory_limiter, batch, resource, probabilistic_sampler, filter/health]
+      exporters: [jaeger, logging, file/traces]
+
+    # Metrics pipeline
+    metrics:
+      receivers: [otlp, prometheus, docker_stats]
+      processors: [memory_limiter, batch, resource, transform/healing_metrics]
+      exporters: [prometheus, logging, file/metrics]
+
+    # Logs pipeline
+    logs:
+      receivers: [otlp, filelog]
+      processors: [memory_limiter, batch, resource, attributes/healing_guard]
+      exporters: [elasticsearch, logging, file/logs]
+
+  telemetry:
+    logs:
+      level: "info"
+    metrics:
+      address: 0.0.0.0:8888
