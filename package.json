@@ -11,7 +11,12 @@
     "serve:docs": "mkdocs serve",
     "lint:docs": "markdownlint docs/",
     "format:docs": "prettier --write 'docs/**/*.md'",
-    "test:links": "markdown-link-check docs/**/*.md"
+    "test:links": "markdown-link-check docs/**/*.md",
+    "dev:setup": "poetry install --with dev,test,docs && poetry run pre-commit install",
+    "dev:start": "docker-compose -f docker-compose.dev.yml up -d",
+    "dev:stop": "docker-compose -f docker-compose.dev.yml down",
+    "lint": "poetry run ruff check . && poetry run mypy .",
+    "format": "poetry run black . && poetry run isort ."
   },
   "repository": {
     "type": "git",
