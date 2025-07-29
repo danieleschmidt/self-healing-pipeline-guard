@@ -1,0 +1,95 @@
+# GitHub Dependabot configuration for automated dependency updates
+# Ensures security patches and updates are applied consistently
+# Ref: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
+version: 2
+updates:
+  # Python dependencies via Poetry
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "terragon-labs/security-team"
+    assignees:
+      - "terragon-labs/platform-team"
+    labels:
+      - "dependencies"
+      - "security"
+      - "automated"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    allow:
+      - dependency-type: "all"
+    ignore:
+      # Pin major version updates for ML frameworks
+      - dependency-name: "tensorflow"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "torch"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "transformers"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions dependencies  
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "04:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "terragon-labs/devops-team"
+    labels:
+      - "ci-cd"
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "ci"
+
+  # Node.js dependencies (for documentation and tooling)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "04:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "terragon-labs/frontend-team"
+    labels:
+      - "dependencies"
+      - "tooling"
+      - "automated"
+    commit-message:
+      prefix: "chore"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    ignore:
+      # Skip pre-release versions
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "04:00"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "terragon-labs/platform-team"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "security"
+      - "automated"
+    commit-message:
+      prefix: "docker"
