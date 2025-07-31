@@ -1,5 +1,5 @@
 {
-  "python.defaultInterpreterPath": "./venv/bin/python",
+  "python.defaultInterpreterPath": ".venv/bin/python",
   "python.terminal.activateEnvironment": true,
   
   // Testing configuration
@@ -130,10 +130,11 @@
   
   // IntelliSense settings
   "python.analysis.autoImportCompletions": true,
-  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.typeCheckingMode": "strict",
   "python.analysis.autoSearchPaths": true,
   "python.analysis.extraPaths": [
-    "./src"
+    "./healing_guard",
+    "./tests"
   ],
   
   // Code lens
@@ -150,5 +151,58 @@
   // Emmet
   "emmet.includeLanguages": {
     "jinja-html": "html"
-  }
+  },
+  
+  // Additional advanced settings
+  "python.sortImports.provider": "isort",
+  "docker.defaultRegistryPath": "ghcr.io/terragon-labs/self-healing-pipeline-guard",
+  "git.enableCommitSigning": true,
+  "git.alwaysSignOff": true,
+  
+  "cSpell.words": [
+    "terragon",
+    "pyproject",
+    "pytest",
+    "mypy",
+    "bandit",
+    "ruff",
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "sqlalchemy",
+    "asyncpg",
+    "alembic",
+    "redis",
+    "celery",
+    "prometheus",
+    "grafana",
+    "opentelemetry",
+    "structlog",
+    "typer",
+    "jinja",
+    "sklearn",
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "seaborn",
+    "transformers",
+    "torch",
+    "tensorflow",
+    "joblib",
+    "boto",
+    "pygithub",
+    "gitlab",
+    "jenkins",
+    "slack",
+    "discord",
+    "codecov",
+    "snyk",
+    "gitguardian",
+    "hadolint",
+    "trivy",
+    "checkov",
+    "mkdocs",
+    "mkdocstrings",
+    "mermaid"
+  ]
 }
