@@ -1,0 +1,110 @@
+{
+  "timestamp": "2025-08-01T17:31:48.267106",
+  "total_items": 2,
+  "next_best_item": {
+    "id": "git-001",
+    "title": "Address technical debt markers in git history",
+    "description": "Found TODO/FIXME markers in recent commits",
+    "category": "technical-debt",
+    "source": "git-history",
+    "files_affected": [
+      "multiple"
+    ],
+    "estimated_effort": 2.0,
+    "wsjf_score": 9.5,
+    "ice_score": 224.0,
+    "technical_debt_score": 20.0,
+    "composite_score": 12.99,
+    "risk_level": 0.2,
+    "discovered_at": "2025-08-01T17:31:48.264152",
+    "metadata": {
+      "commit_count": 3
+    }
+  },
+  "top_10_items": [
+    {
+      "id": "git-001",
+      "title": "Address technical debt markers in git history",
+      "description": "Found TODO/FIXME markers in recent commits",
+      "category": "technical-debt",
+      "source": "git-history",
+      "files_affected": [
+        "multiple"
+      ],
+      "estimated_effort": 2.0,
+      "wsjf_score": 9.5,
+      "ice_score": 224.0,
+      "technical_debt_score": 20.0,
+      "composite_score": 12.99,
+      "risk_level": 0.2,
+      "discovered_at": "2025-08-01T17:31:48.264152",
+      "metadata": {
+        "commit_count": 3
+      }
+    },
+    {
+      "id": "impl-001",
+      "title": "Implement core healing_guard Python modules",
+      "description": "Core Python implementation is minimal, only monitoring modules exist",
+      "category": "implementation",
+      "source": "file-analysis",
+      "files_affected": [
+        "healing_guard/"
+      ],
+      "estimated_effort": 16.0,
+      "wsjf_score": 1.625,
+      "ice_score": 0,
+      "technical_debt_score": 10,
+      "composite_score": 3.8125,
+      "risk_level": 0.5,
+      "discovered_at": "2025-08-01T17:31:48.266929",
+      "metadata": {
+        "current_files": 2,
+        "needed": "core-implementation"
+      }
+    }
+  ],
+  "all_items": [
+    {
+      "id": "git-001",
+      "title": "Address technical debt markers in git history",
+      "description": "Found TODO/FIXME markers in recent commits",
+      "category": "technical-debt",
+      "source": "git-history",
+      "files_affected": [
+        "multiple"
+      ],
+      "estimated_effort": 2.0,
+      "wsjf_score": 9.5,
+      "ice_score": 224.0,
+      "technical_debt_score": 20.0,
+      "composite_score": 12.99,
+      "risk_level": 0.2,
+      "discovered_at": "2025-08-01T17:31:48.264152",
+      "metadata": {
+        "commit_count": 3
+      }
+    },
+    {
+      "id": "impl-001",
+      "title": "Implement core healing_guard Python modules",
+      "description": "Core Python implementation is minimal, only monitoring modules exist",
+      "category": "implementation",
+      "source": "file-analysis",
+      "files_affected": [
+        "healing_guard/"
+      ],
+      "estimated_effort": 16.0,
+      "wsjf_score": 1.625,
+      "ice_score": 0,
+      "technical_debt_score": 10,
+      "composite_score": 3.8125,
+      "risk_level": 0.5,
+      "discovered_at": "2025-08-01T17:31:48.266929",
+      "metadata": {
+        "current_files": 2,
+        "needed": "core-implementation"
+      }
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+# Terragon Autonomous SDLC Value Discovery Configuration
+# Repository: self-healing-pipeline-guard
+# Maturity Level: Advanced (90%)
+# Assessment Date: 2025-08-01
+
+scoring:
+  # Adaptive weights based on Advanced repository maturity
+  weights:
+    advanced:
+      wsjf: 0.5           # Weighted Shortest Job First
+      ice: 0.1            # Impact, Confidence, Ease
+      technicalDebt: 0.3  # Technical debt reduction priority
+      security: 0.1       # Security improvements
+
+  # Score thresholds for work selection
+  thresholds:
+    minScore: 8          # Minimum composite score for execution (lowered for continuous operation)
+    maxRisk: 0.7         # Maximum acceptable risk threshold
+    securityBoost: 2.0   # Security vulnerability priority multiplier
+    complianceBoost: 1.8 # Compliance issue priority multiplier
+
+# Value discovery sources for continuous signal harvesting
+discovery:
+  sources:
+    - gitHistory          # Git commit analysis for debt markers
+    - staticAnalysis      # Code quality and complexity analysis
+    - issueTrackers       # GitHub issues and PRs
+    - vulnerabilityDatabases # CVE and security advisory monitoring
+    - performanceMonitoring  # Application performance metrics
+    - dependencyUpdates   # Package update availability
+  
+  # Analysis tools configuration
+  tools:
+    staticAnalysis:
+      - ruff              # Python linting and code analysis
+      - mypy              # Type checking analysis
+      - bandit            # Security vulnerability scanning
+      - safety            # Dependency vulnerability checking
+    
+    security:
+      - snyk              # Vulnerability database scanning
+      - dependabot        # Automated dependency updates
+      - gitguardian       # Secret detection
+    
+    performance:
+      - locust            # Load testing analysis
+      - prometheus        # Metrics analysis
+
+# Autonomous execution configuration
+execution:
+  maxConcurrentTasks: 1            # One task at a time for safety
+  
+  # Testing requirements before merge
+  testRequirements:
+    minCoverage: 80               # Minimum test coverage threshold
+    performanceRegression: 5      # Max % performance regression allowed
+    
+  # Conditions that trigger automatic rollback
+  rollbackTriggers:
+    - testFailure                 # Any test suite failure
+    - buildFailure               # Build or compilation failure
+    - securityViolation          # Security check failure
+    - coverageDecrease           # Test coverage reduction
+
+# Repository-specific context for intelligent decision making
+repository:
+  name: "self-healing-pipeline-guard"
+  primaryLanguage: "Python"
+  framework: "FastAPI"
+  architecture: "AI/ML Pipeline Guardian"
+  maturityLevel: "Advanced"
+  
+  # Critical paths that require extra attention
+  criticalPaths:
+    - "healing_guard/"           # Core application logic
+    - "tests/"                   # Test infrastructure
+    - "config/"                  # Configuration management
+    - "docs/"                    # Documentation system
+
+# Integration endpoints for notifications and reporting
+integrations:
+  github:
+    enabled: true
+    createPRs: true
+    assignReviewers: true
+    
+  monitoring:
+    prometheus:
+      enabled: true
+      metricsPrefix: "terragon_autonomous_"
+      
+    dashboard:
+      enabled: true
+      updateFrequency: "hourly"
+
+# Continuous learning configuration
+learning:
+  # Track execution outcomes for model improvement
+  trackingEnabled: true
+  
+  # Minimum samples before model adjustment
+  learningThreshold: 10
+  
+  # Confidence adjustment factors
+  confidenceDecay: 0.95    # Reduce confidence over time if not validated
+  accuracyBoost: 1.1       # Increase confidence for accurate predictions
