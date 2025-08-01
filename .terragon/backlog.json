@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-08-01T11:44:21.167872",
+  "timestamp": "2025-08-01T17:29:35.661967",
   "total_items": 3,
   "next_best_item": {
     "id": "git-001",
@@ -16,7 +16,7 @@
     "technical_debt_score": 20.0,
     "composite_score": 12.99,
     "risk_level": 0.2,
-    "discovered_at": "2025-08-01T11:44:21.165576",
+    "discovered_at": "2025-08-01T17:29:35.657159",
     "metadata": {
       "commit_count": 3
     }
@@ -37,7 +37,7 @@
       "technical_debt_score": 20.0,
       "composite_score": 12.99,
       "risk_level": 0.2,
-      "discovered_at": "2025-08-01T11:44:21.165576",
+      "discovered_at": "2025-08-01T17:29:35.657159",
       "metadata": {
         "commit_count": 3
       }
@@ -57,7 +57,7 @@
       "technical_debt_score": 10,
       "composite_score": 9.985,
       "risk_level": 0.4,
-      "discovered_at": "2025-08-01T11:44:21.167314",
+      "discovered_at": "2025-08-01T17:29:35.660904",
       "metadata": {
         "component": "github-actions"
       }
@@ -77,7 +77,7 @@
       "technical_debt_score": 10,
       "composite_score": 3.8125,
       "risk_level": 0.5,
-      "discovered_at": "2025-08-01T11:44:21.167716",
+      "discovered_at": "2025-08-01T17:29:35.661680",
       "metadata": {
         "current_files": 2,
         "needed": "core-implementation"
@@ -100,7 +100,7 @@
       "technical_debt_score": 20.0,
       "composite_score": 12.99,
       "risk_level": 0.2,
-      "discovered_at": "2025-08-01T11:44:21.165576",
+      "discovered_at": "2025-08-01T17:29:35.657159",
       "metadata": {
         "commit_count": 3
       }
@@ -120,7 +120,7 @@
       "technical_debt_score": 10,
       "composite_score": 9.985,
       "risk_level": 0.4,
-      "discovered_at": "2025-08-01T11:44:21.167314",
+      "discovered_at": "2025-08-01T17:29:35.660904",
       "metadata": {
         "component": "github-actions"
       }
@@ -140,7 +140,7 @@
       "technical_debt_score": 10,
       "composite_score": 3.8125,
       "risk_level": 0.5,
-      "discovered_at": "2025-08-01T11:44:21.167716",
+      "discovered_at": "2025-08-01T17:29:35.661680",
       "metadata": {
         "current_files": 2,
         "needed": "core-implementation"

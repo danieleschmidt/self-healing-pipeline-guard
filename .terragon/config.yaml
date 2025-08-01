@@ -14,7 +14,7 @@ scoring:
 
   # Score thresholds for work selection
   thresholds:
-    minScore: 15         # Minimum composite score for execution
+    minScore: 8          # Minimum composite score for execution (lowered for continuous operation)
     maxRisk: 0.7         # Maximum acceptable risk threshold
     securityBoost: 2.0   # Security vulnerability priority multiplier
     complianceBoost: 1.8 # Compliance issue priority multiplier
