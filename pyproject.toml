@@ -91,7 +91,7 @@ ruff = "^0.12.5"
 
 [tool.poetry.group.test.dependencies]
 factory-boy = "^3.3.0"
-faker = "^20.1.0"
+faker = "^37.4.2"
 httpx = "^0.25.2"
 respx = "^0.20.2"
 pytest-benchmark = "^4.0.0"
