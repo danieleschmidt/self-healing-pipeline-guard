@@ -4,6 +4,7 @@ Defines load testing scenarios for API endpoints and webhook processing.
 """
 
 import json
+import os
 import random
 from typing import Dict, Any
 
@@ -113,7 +114,7 @@ class APIUserTasks(TaskSet):
         # Simulate authentication
         login_data = {
             "username": f"test_user_{random.randint(1, 100)}",
-            "password": "test_password"
+            "password": os.getenv("TEST_PASSWORD", "test_password")
         }
         
         response = self.client.post("/auth/login", json=login_data)

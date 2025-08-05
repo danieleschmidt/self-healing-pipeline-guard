@@ -1,0 +1,100 @@
+{
+  "timestamp": "2025-08-05T13:32:19.589326",
+  "overall_status": "FAIL",
+  "total_execution_time": 0.35802125930786133,
+  "gates": {
+    "Code Quality": {
+      "name": "Code Quality",
+      "description": "Check code style, complexity, and quality metrics",
+      "success": true,
+      "errors": [],
+      "warnings": [
+        "Module init file missing: healing_guard.monitoring.__init__.py",
+        "Found 5 FIXME comments that should be addressed"
+      ],
+      "metrics": {
+        "python_files_checked": 44,
+        "syntax_errors": 0,
+        "structure_issues": 0,
+        "todo_comments": 5,
+        "fixme_comments": 5
+      },
+      "execution_time": 0.17254328727722168
+    },
+    "Security": {
+      "name": "Security",
+      "description": "Check for security vulnerabilities and issues",
+      "success": false,
+      "errors": [
+        "Potential hardcoded secret in tests/performance/locustfile.py"
+      ],
+      "warnings": [
+        "Use of eval() function found in quality_gates_runner.py",
+        "Use of exec() function found in quality_gates_runner.py",
+        "Use of eval() function found in scripts/check_security_policies.py",
+        "Use of exec() function found in scripts/check_security_policies.py",
+        "Use of weak MD5 hash found in healing_guard/core/cache.py",
+        "Use of eval() function found in healing_guard/security/scanner.py",
+        "Use of exec() function found in healing_guard/security/scanner.py",
+        "Use of weak MD5 hash found in healing_guard/security/scanner.py",
+        "Use of eval() function found in healing_guard/security/validator.py",
+        "File docker-compose.prod.yml may have overly permissive permissions"
+      ],
+      "metrics": {
+        "potential_secrets": 1,
+        "insecure_patterns": 9,
+        "permission_issues": 1
+      },
+      "execution_time": 0.10343074798583984
+    },
+    "Performance": {
+      "name": "Performance",
+      "description": "Check performance characteristics and scalability",
+      "success": true,
+      "errors": [],
+      "warnings": [
+        "Potential N+1 query problem in quality_gates_runner.py",
+        "List append in loop - consider list comprehension in scripts/update_version.py",
+        "Large range loops may impact performance in tests/performance/pytest_benchmarks.py",
+        "Large range loops may impact performance in tests/unit/test_failure_detector.py",
+        "Large range loops may impact performance in tests/unit/test_failure_detector_enhanced.py",
+        "Large range loops may impact performance in tests/unit/test_healing_engine.py",
+        "Found 44 functions with >50 lines - consider refactoring",
+        "Recursion limit modification in quality_gates_runner.py",
+        "File opened without explicit close in healing_guard/security/scanner.py"
+      ],
+      "metrics": {
+        "performance_warnings": 6,
+        "total_lines": 15946,
+        "total_functions": 501,
+        "complex_functions": 44,
+        "resource_warnings": 2
+      },
+      "execution_time": 0.07958650588989258
+    },
+    "Tests": {
+      "name": "Tests",
+      "description": "Check test coverage and test quality",
+      "success": true,
+      "errors": [],
+      "warnings": [
+        "Low test coverage: 56.2% (target: 80%)"
+      ],
+      "metrics": {
+        "test_files": 9,
+        "has_pytest_config": true,
+        "source_modules": 16,
+        "tested_modules": 9,
+        "estimated_coverage": 56.25
+      },
+      "execution_time": 0.0015614032745361328
+    }
+  },
+  "summary": {
+    "total_gates": 4,
+    "passed_gates": 3,
+    "failed_gates": 1,
+    "total_errors": 1,
+    "total_warnings": 22
+  }
+}

@@ -1,0 +1,39 @@
+apiVersion: v2
+name: healing-guard
+description: Self-Healing Pipeline Guard - AI-powered CI/CD failure detection and remediation
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+home: https://github.com/terragon-labs/self-healing-pipeline-guard
+sources:
+  - https://github.com/terragon-labs/self-healing-pipeline-guard
+maintainers:
+  - name: Terragon Labs
+    email: devops@terragonlabs.com
+    url: https://terragonlabs.com
+keywords:
+  - ci-cd
+  - devops
+  - automation
+  - healing
+  - pipeline
+  - quantum-ai
+  - failure-detection
+  - self-healing
+annotations:
+  category: DevOps
+  licenses: MIT
+dependencies:
+  - name: postgresql
+    version: "12.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+  - name: redis
+    version: "17.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+  - name: prometheus
+    version: "15.x.x"
+    repository: "https://prometheus-community.github.io/helm-charts"
+    condition: prometheus.enabled
+    alias: prometheus
