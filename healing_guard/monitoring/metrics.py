@@ -1,10 +1,16 @@
-"""Prometheus metrics and monitoring utilities."""
+"""Enhanced metrics collection and monitoring utilities."""
 
-import time
+import asyncio
 import logging
+import time
+from collections import defaultdict, deque
+from dataclasses import dataclass, field
+from datetime import datetime, timezone, timedelta
 from functools import wraps
-from typing import Dict, Any, Optional, Callable
+from typing import Dict, List, Optional, Any, Callable, Deque
+from threading import Lock
 
+import psutil
 from prometheus_client import (
     Counter, Histogram, Gauge, Info, Enum,
     CollectorRegistry, generate_latest, CONTENT_TYPE_LATEST
@@ -197,11 +203,38 @@ mttr_improvement = Gauge(
 )
 
 
+@dataclass
+class MetricSnapshot:
+    """Snapshot of system metrics at a point in time."""
+    timestamp: datetime
+    cpu_percent: float
+    memory_percent: float
+    disk_usage: Dict[str, float]
+    network_io: Dict[str, int]
+    quantum_planner_tasks: int
+    failure_detector_patterns: int
+    healing_engine_active: int
+    custom_metrics: Dict[str, Any] = field(default_factory=dict)
+
+
 class MetricsCollector:
-    """Centralized metrics collection and utilities."""
+    """Enhanced metrics collection and aggregation system."""
     
-    def __init__(self):
+    def __init__(self, history_size: int = 1000, collection_interval: int = 30):
         self.start_time = time.time()
+        self.history_size = history_size
+        self.collection_interval = collection_interval
+        self.metrics_history: Deque[MetricSnapshot] = deque(maxlen=history_size)
+        self.custom_metrics: Dict[str, Any] = {}
+        self.collection_lock = Lock()
+        self.collection_task: Optional[asyncio.Task] = None
+        self.is_running = False
+        
+        # Performance counters
+        self.request_counters = defaultdict(int)
+        self.error_counters = defaultdict(int)
+        self.timing_histograms = defaultdict(list)
+        
         self._initialize_app_info()
     
     def _initialize_app_info(self):
@@ -341,6 +374,113 @@ class MetricsCollector:
         repositories_monitored.set(repositories_count)
         pipelines_healed_today.set(pipelines_healed_today_count)
         mttr_improvement.labels(time_period='daily').set(mttr_improvement_percent)
+    
+    async def initialize(self):
+        """Initialize the metrics collector."""
+        logger.info("Initializing metrics collector")
+        self.is_running = True
+        self.collection_task = asyncio.create_task(self._collection_loop())
+        
+    async def cleanup(self):
+        """Clean up the metrics collector."""
+        logger.info("Shutting down metrics collector")
+        self.is_running = False
+        
+        if self.collection_task:
+            self.collection_task.cancel()
+            try:
+                await self.collection_task
+            except asyncio.CancelledError:
+                pass
+    
+    async def _collection_loop(self):
+        """Main metrics collection loop."""
+        while self.is_running:
+            try:
+                await self._collect_system_metrics()
+                await asyncio.sleep(self.collection_interval)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Error in metrics collection: {e}")
+                await asyncio.sleep(5)  # Back off on error
+    
+    async def _collect_system_metrics(self):
+        """Collect system performance metrics."""
+        try:
+            # CPU metrics
+            cpu_percent = psutil.cpu_percent(interval=1)
+            
+            # Memory metrics
+            memory = psutil.virtual_memory()
+            memory_percent = memory.percent
+            
+            # Disk metrics
+            disk_usage = {}
+            for partition in psutil.disk_partitions():
+                try:
+                    usage = psutil.disk_usage(partition.mountpoint)
+                    disk_usage[partition.mountpoint] = (usage.used / usage.total) * 100
+                except (PermissionError, OSError):
+                    continue
+            
+            # Network metrics
+            network_io = psutil.net_io_counters()._asdict() if psutil.net_io_counters() else {}
+            
+            # Create snapshot
+            snapshot = MetricSnapshot(
+                timestamp=datetime.now(timezone.utc),
+                cpu_percent=cpu_percent,
+                memory_percent=memory_percent,
+                disk_usage=disk_usage,
+                network_io=network_io,
+                quantum_planner_tasks=self.custom_metrics.get('quantum_planner_tasks', 0),
+                failure_detector_patterns=self.custom_metrics.get('failure_detector_patterns', 0),
+                healing_engine_active=self.custom_metrics.get('healing_engine_active', 0),
+                custom_metrics=self.custom_metrics.copy()
+            )
+            
+            # Store snapshot
+            with self.collection_lock:
+                self.metrics_history.append(snapshot)
+            
+            logger.debug(f"Collected metrics: CPU {cpu_percent:.1f}%, Memory {memory_percent:.1f}%")
+            
+        except Exception as e:
+            logger.error(f"Failed to collect system metrics: {e}")
+    
+    def record_custom_metric(self, name: str, value: Any):
+        """Record a custom metric value."""
+        with self.collection_lock:
+            self.custom_metrics[name] = value
+            
+        logger.debug(f"Recorded custom metric: {name} = {value}")
+    
+    def get_current_metrics(self) -> Dict[str, Any]:
+        """Get current system metrics snapshot."""
+        with self.collection_lock:
+            if not self.metrics_history:
+                return {"message": "No metrics available"}
+            
+            latest = self.metrics_history[-1]
+            
+            return {
+                "timestamp": latest.timestamp.isoformat(),
+                "system": {
+                    "cpu_percent": latest.cpu_percent,
+                    "memory_percent": latest.memory_percent,
+                    "disk_usage": latest.disk_usage,
+                    "network_io": latest.network_io
+                },
+                "application": {
+                    "quantum_planner_tasks": latest.quantum_planner_tasks,
+                    "failure_detector_patterns": latest.failure_detector_patterns,
+                    "healing_engine_active": latest.healing_engine_active
+                },
+                "custom_metrics": latest.custom_metrics,
+                "collection_interval": self.collection_interval,
+                "history_size": len(self.metrics_history)
+            }
     
     def get_metrics(self) -> str:
         """Get all metrics in Prometheus format."""

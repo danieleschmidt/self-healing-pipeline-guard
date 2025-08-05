@@ -54,7 +54,7 @@ services:
     restart: unless-stopped
     networks:
       - healing-network
-    command: ["poetry", "run", "celery", "worker", "-A", "healing_guard.worker", "--loglevel=info"]
+    command: ["poetry", "run", "celery", "worker", "-A", "healing_guard.core.worker", "--loglevel=info"]
 
   # Database
   postgres:

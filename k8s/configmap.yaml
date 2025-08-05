@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: healing-guard-config
+  namespace: healing-guard
+  labels:
+    app.kubernetes.io/name: healing-guard
+    app.kubernetes.io/instance: healing-guard
+    app.kubernetes.io/component: configmap
+data:
+  # Application configuration
+  HEALING_GUARD_ENV: "production"
+  HEALING_GUARD_LOG_LEVEL: "INFO"
+  HEALING_GUARD_HOST: "0.0.0.0"
+  HEALING_GUARD_PORT: "8000"
+  HEALING_GUARD_WORKERS: "4"
+  
+  # Database configuration
+  DATABASE_HOST: "postgres-service.healing-guard.svc.cluster.local"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "healing_guard"
+  DATABASE_USER: "healing_guard"
+  
+  # Redis configuration
+  REDIS_HOST: "redis-service.healing-guard.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  
+  # Quantum planner configuration
+  QUANTUM_PLANNER_ENABLED: "true"
+  QUANTUM_PLANNER_TEMPERATURE: "1.0"
+  QUANTUM_PLANNER_COOLING_RATE: "0.95"
+  QUANTUM_PLANNER_MIN_TEMPERATURE: "0.01"
+  QUANTUM_PLANNER_MAX_ITERATIONS: "1000"
+  
+  # Auto-scaling configuration
+  AUTO_SCALING_ENABLED: "true"
+  AUTO_SCALING_MIN_REPLICAS: "2"
+  AUTO_SCALING_MAX_REPLICAS: "20"
+  AUTO_SCALING_TARGET_CPU: "70"
+  AUTO_SCALING_TARGET_MEMORY: "80"
+  
+  # Security configuration
+  SECURITY_SCANNING_ENABLED: "true"
+  RATE_LIMITING_ENABLED: "true"
+  RATE_LIMIT_REQUESTS: "100"
+  RATE_LIMIT_WINDOW: "60"
+  
+  # Monitoring configuration
+  METRICS_ENABLED: "true"
+  METRICS_PORT: "9090"
+  HEALTH_CHECK_INTERVAL: "30"
+  
+  # GDPR compliance
+  GDPR_COMPLIANCE_ENABLED: "true"
+  GDPR_DATA_RETENTION_DAYS: "730"
+  GDPR_ORGANIZATION: "Terragon Labs"
+  GDPR_DPO_CONTACT: "dpo@terragonlabs.com"
+  
+  # Internationalization
+  I18N_ENABLED: "true"
+  I18N_DEFAULT_LANGUAGE: "en"
+  I18N_SUPPORTED_LANGUAGES: "en,es,fr,de,it,pt,zh,ja,ko,ar"

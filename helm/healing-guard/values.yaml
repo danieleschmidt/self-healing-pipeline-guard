@@ -1,0 +1,293 @@
+# Default values for healing-guard
+# This is a YAML-formatted file.
+
+# Global configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: "fast-ssd"
+
+# Image configuration
+image:
+  registry: docker.io
+  repository: terragonlabs/healing-guard
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# Deployment configuration
+replicaCount: 3
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Service Account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit-connections: "20"
+    nginx.ingress.kubernetes.io/rate-limit-requests-per-minute: "100"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: healing-guard.terragonlabs.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: healing-guard-tls
+      hosts:
+        - healing-guard.terragonlabs.com
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+# Auto-scaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Node selector and affinity
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - healing-guard
+        topologyKey: kubernetes.io/hostname
+
+# Persistent storage
+persistence:
+  enabled: true
+  storageClass: "fast-ssd"
+  accessMode: ReadWriteOnce
+  size: 10Gi
+
+# Application configuration
+config:
+  # Environment
+  environment: production
+  logLevel: INFO
+  
+  # Server
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  
+  # Quantum planner
+  quantumPlanner:
+    enabled: true
+    temperature: 1.0
+    coolingRate: 0.95
+    minTemperature: 0.01
+    maxIterations: 1000
+  
+  # Auto-scaling
+  autoScaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 20
+    targetCPU: 70
+    targetMemory: 80
+  
+  # Security
+  security:
+    scanningEnabled: true
+    rateLimitingEnabled: true
+    rateLimitRequests: 100
+    rateLimitWindow: 60
+  
+  # Monitoring
+  monitoring:
+    enabled: true
+    port: 9090
+    healthCheckInterval: 30
+  
+  # GDPR compliance
+  gdpr:
+    enabled: true
+    dataRetentionDays: 730
+    organization: "Terragon Labs"
+    dpoContact: "dpo@terragonlabs.com"
+  
+  # Internationalization
+  i18n:
+    enabled: true
+    defaultLanguage: "en"
+    supportedLanguages: "en,es,fr,de,it,pt,zh,ja,ko,ar"
+
+# Secrets configuration
+secrets:
+  # Database
+  databasePassword: "healing_guard_password"
+  
+  # Redis
+  redisPassword: "redis_password"
+  
+  # JWT
+  jwtSecretKey: "super_secret_jwt_key_for_healing_guard"
+  jwtAlgorithm: "HS256"
+  
+  # Webhooks
+  githubWebhookSecret: "github_webhook_secret"
+  gitlabWebhookSecret: "gitlab_webhook_secret"
+  
+  # Encryption
+  encryptionKey: "encryption_key_for_healing_guard"
+
+# PostgreSQL configuration (dependency)
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "postgres_password"
+    username: "healing_guard"
+    password: "healing_guard_password"
+    database: "healing_guard"
+  architecture: standalone
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: "fast-ssd"
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+      limits:
+        memory: 1Gi
+        cpu: 500m
+
+# Redis configuration (dependency)
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: "redis_password"
+  architecture: standalone
+  master:
+    persistence:
+      enabled: true
+      size: 5Gi
+      storageClass: "fast-ssd"
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 250m
+
+# Prometheus monitoring (dependency)
+prometheus:
+  enabled: true
+  server:
+    persistentVolume:
+      enabled: true
+      size: 10Gi
+      storageClass: "fast-ssd"
+  alertmanager:
+    enabled: true
+  nodeExporter:
+    enabled: true
+  pushgateway:
+    enabled: false
+
+# Health checks
+healthCheck:
+  enabled: true
+  livenessProbe:
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+  readinessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 2
+  startupProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+
+# Network policies
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: ingress-nginx
+      ports:
+      - protocol: TCP
+        port: 8000
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: monitoring
+      ports:
+      - protocol: TCP
+        port: 9090
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Service monitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  path: /metrics
+  port: metrics

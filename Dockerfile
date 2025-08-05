@@ -70,7 +70,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
 
 # Default command
-CMD ["poetry", "run", "uvicorn", "healing_guard.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["poetry", "run", "uvicorn", "healing_guard.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # Development stage
 FROM builder as development
@@ -86,7 +86,7 @@ RUN apt-get update && apt-get install -y \
 USER appuser
 
 # Development command
-CMD ["poetry", "run", "uvicorn", "healing_guard.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["poetry", "run", "uvicorn", "healing_guard.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 # Testing stage
 FROM builder as testing
@@ -129,4 +129,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:8000/health', timeout=5)" || exit 1
 
 # Production command with proper signal handling
-CMD ["poetry", "run", "gunicorn", "healing_guard.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "120", "--keep-alive", "2", "--max-requests", "1000", "--max-requests-jitter", "100"]
+CMD ["poetry", "run", "gunicorn", "healing_guard.api.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "120", "--keep-alive", "2", "--max-requests", "1000", "--max-requests-jitter", "100"]
