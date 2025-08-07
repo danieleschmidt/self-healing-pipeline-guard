@@ -14,6 +14,7 @@ from typing import Dict, List, Optional, Any, Callable
 
 from .quantum_planner import QuantumTaskPlanner, Task, TaskPriority, TaskStatus
 from .failure_detector import FailureDetector, FailureEvent, FailureType, SeverityLevel
+from .sentiment_analyzer import sentiment_analyzer, SentimentLabel, SentimentResult
 
 logger = logging.getLogger(__name__)
 
@@ -251,7 +252,7 @@ class HealingEngine:
         self.custom_actions[action.id] = action
         logger.info(f"Added custom healing action: {action.id}")
         
-    def _create_healing_actions(self, failure_event: FailureEvent) -> List[HealingAction]:
+    def _create_healing_actions(self, failure_event: FailureEvent, sentiment_result: Optional[SentimentResult] = None) -> List[HealingAction]:
         """Create healing actions based on failure type and suggestions."""
         actions = []
         
@@ -276,9 +277,13 @@ class HealingEngine:
                 if action:
                     actions.append(action)
                     
-        # Add default actions based on failure type
+        # Add default actions based on failure type, enhanced with sentiment awareness
         default_actions = self._get_default_actions_for_failure_type(failure_event.failure_type)
         actions.extend(default_actions)
+        
+        # Apply sentiment-aware enhancements to actions
+        if sentiment_result:
+            actions = self._enhance_actions_with_sentiment(actions, sentiment_result, failure_event)
         
         # Remove duplicates based on strategy
         unique_actions = {}
@@ -287,6 +292,92 @@ class HealingEngine:
                 unique_actions[action.strategy] = action
                 
         return list(unique_actions.values())
+    
+    def _enhance_actions_with_sentiment(
+        self, 
+        actions: List[HealingAction], 
+        sentiment_result: SentimentResult, 
+        failure_event: FailureEvent
+    ) -> List[HealingAction]:
+        """Enhance healing actions based on sentiment analysis results."""
+        enhanced_actions = []
+        
+        for action in actions:
+            enhanced_action = action
+            
+            # Modify actions based on sentiment
+            if sentiment_result.is_urgent or sentiment_result.urgency_score > 0.7:
+                # For urgent situations, prioritize faster actions and reduce timeouts
+                if action.strategy == HealingStrategy.RETRY_WITH_BACKOFF:
+                    enhanced_action.parameters = {**action.parameters, 
+                                                "max_retries": 1, 
+                                                "base_delay": 0.5}
+                    enhanced_action.description += " (urgent: reduced retries)"
+                    enhanced_action.estimated_duration *= 0.5
+                
+                # Add parallel execution for urgent cases
+                enhanced_action.parameters = {**enhanced_action.parameters, "priority": "urgent"}
+                
+            elif sentiment_result.is_frustrated:
+                # For frustrated users, add more thorough actions and better logging
+                if action.strategy == HealingStrategy.RETRY_WITH_BACKOFF:
+                    enhanced_action.parameters = {**action.parameters, 
+                                                "detailed_logging": True,
+                                                "notify_user": True}
+                    enhanced_action.description += " (with detailed progress updates)"
+                
+                # Add extra validation steps for frustrated users
+                enhanced_action.parameters = {**enhanced_action.parameters, "validate_after": True}
+            
+            elif sentiment_result.emotional_intensity > 0.6:
+                # For high emotional intensity, add user communication
+                enhanced_action.parameters = {**enhanced_action.parameters, 
+                                            "notify_progress": True,
+                                            "estimated_completion": True}
+                enhanced_action.description += " (with progress notifications)"
+            
+            # Adjust resource allocation based on sentiment urgency
+            if (sentiment_result.urgency_score > 0.5 and 
+                action.strategy == HealingStrategy.INCREASE_RESOURCES):
+                # Increase resource allocation more aggressively for urgent situations
+                cpu_increase = action.parameters.get("cpu_increase", 2.0)
+                memory_increase = action.parameters.get("memory_increase", 4.0)
+                
+                enhanced_action.parameters = {**action.parameters,
+                                            "cpu_increase": cpu_increase * 1.5,
+                                            "memory_increase": memory_increase * 1.5}
+                enhanced_action.description += " (increased for urgency)"
+                enhanced_action.cost_estimate *= 1.3
+            
+            # For production issues with negative sentiment, add rollback preparation
+            if (sentiment_result.is_negative and 
+                sentiment_result.context_factors.get('is_production', False)):
+                enhanced_action.parameters = {**enhanced_action.parameters, 
+                                            "prepare_rollback": True,
+                                            "backup_current_state": True}
+                enhanced_action.side_effects = enhanced_action.side_effects + ["rollback_prepared"]
+            
+            enhanced_actions.append(enhanced_action)
+        
+        # Add additional sentiment-specific actions
+        if sentiment_result.is_urgent and sentiment_result.urgency_score > 0.8:
+            # Add immediate notification action for critical urgent issues
+            notification_action = HealingAction(
+                id=f"urgent_notify_{uuid.uuid4().hex[:8]}",
+                strategy=HealingStrategy.RESTART_SERVICES,  # Reusing enum, would be NOTIFY in real implementation
+                description="Send immediate notification to on-call team",
+                parameters={
+                    "notification_type": "urgent",
+                    "include_sentiment_analysis": True,
+                    "escalate_immediately": True
+                },
+                estimated_duration=0.5,
+                success_probability=0.95,
+                cost_estimate=0.1
+            )
+            enhanced_actions.append(notification_action)
+        
+        return enhanced_actions
     
     def _create_action_for_strategy(
         self,
@@ -422,12 +513,41 @@ class HealingEngine:
             
         return actions
     
-    async def create_healing_plan(self, failure_event: FailureEvent) -> HealingPlan:
-        """Create an optimized healing plan for a failure event."""
+    async def create_healing_plan(self, failure_event: FailureEvent, sentiment_context: Optional[Dict[str, Any]] = None) -> HealingPlan:
+        """Create an optimized healing plan for a failure event with sentiment-aware prioritization."""
         logger.info(f"Creating healing plan for failure {failure_event.id}")
         
-        # Create healing actions
-        actions = self._create_healing_actions(failure_event)
+        # Analyze sentiment of failure logs and context
+        sentiment_result = None
+        if hasattr(failure_event, 'logs') and failure_event.logs:
+            sentiment_analysis_context = {
+                'event_type': 'pipeline_failure',
+                'failure_type': failure_event.failure_type.value,
+                'severity': failure_event.severity.value,
+                'repository': failure_event.repository,
+                'is_production': sentiment_context.get('environment') == 'production' if sentiment_context else False,
+                'consecutive_failures': sentiment_context.get('consecutive_failures', 0) if sentiment_context else 0
+            }
+            
+            try:
+                sentiment_result = await sentiment_analyzer.analyze_pipeline_event(
+                    event_type='pipeline_failure',
+                    message=failure_event.logs[:1000],  # Analyze first 1000 chars
+                    metadata=sentiment_analysis_context
+                )
+                
+                logger.info(
+                    f"Sentiment analysis for failure {failure_event.id}: "
+                    f"{sentiment_result.label.value} (confidence: {sentiment_result.confidence:.2f}, "
+                    f"urgency: {sentiment_result.urgency_score:.2f})"
+                )
+                
+            except Exception as e:
+                logger.warning(f"Failed to analyze sentiment for failure {failure_event.id}: {e}")
+                sentiment_result = None
+        
+        # Create healing actions with sentiment-aware modifications
+        actions = self._create_healing_actions(failure_event, sentiment_result)
         
         if not actions:
             raise ValueError(f"No healing actions available for failure type {failure_event.failure_type}")
@@ -454,8 +574,8 @@ class HealingEngine:
         success_probability = execution_plan.success_probability
         total_cost = sum(action.cost_estimate for action in actions)
         
-        # Determine priority based on failure severity and impact
-        priority = self._calculate_healing_priority(failure_event, total_cost, success_probability)
+        # Determine priority based on failure severity, impact, and sentiment analysis
+        priority = self._calculate_healing_priority(failure_event, total_cost, success_probability, sentiment_result)
         
         healing_plan = HealingPlan(
             id=f"healing_{uuid.uuid4().hex[:8]}",
@@ -490,9 +610,10 @@ class HealingEngine:
         self,
         failure_event: FailureEvent,
         total_cost: float,
-        success_probability: float
+        success_probability: float,
+        sentiment_result: Optional[SentimentResult] = None
     ) -> int:
-        """Calculate healing priority score (lower = higher priority)."""
+        """Calculate healing priority score with sentiment awareness (lower = higher priority)."""
         base_priority = failure_event.severity.value * 10
         
         # Adjust for success probability
@@ -505,8 +626,37 @@ class HealingEngine:
         branch_factor = 0
         if failure_event.branch in ["main", "master", "production"]:
             branch_factor = -10  # Higher priority for important branches
+        
+        # Sentiment-aware priority adjustments
+        sentiment_factor = 0
+        if sentiment_result:
+            # Urgent sentiment increases priority significantly
+            if sentiment_result.is_urgent or sentiment_result.label == SentimentLabel.URGENT:
+                sentiment_factor = -15  # Much higher priority
+                logger.info(f"Urgent sentiment detected, increasing healing priority for {failure_event.id}")
             
-        total_priority = base_priority + probability_factor + cost_factor + branch_factor
+            # Frustrated sentiment increases priority moderately
+            elif sentiment_result.is_frustrated or sentiment_result.label == SentimentLabel.FRUSTRATED:
+                sentiment_factor = -8  # Higher priority
+                logger.info(f"Frustrated sentiment detected, increasing healing priority for {failure_event.id}")
+            
+            # High urgency score from context (production, consecutive failures, etc.)
+            elif sentiment_result.urgency_score > 0.7:
+                sentiment_factor = -12  # High priority
+            elif sentiment_result.urgency_score > 0.5:
+                sentiment_factor = -5   # Medium priority increase
+            
+            # Emotional intensity can indicate developer stress
+            if sentiment_result.emotional_intensity > 0.6:
+                sentiment_factor -= 3  # Additional priority boost for high stress
+            
+            # Multiple negative indicators compound
+            if (sentiment_result.is_negative and 
+                sentiment_result.urgency_score > 0.4 and 
+                sentiment_result.emotional_intensity > 0.4):
+                sentiment_factor -= 5  # Compound negative sentiment
+        
+        total_priority = base_priority + probability_factor + cost_factor + branch_factor + sentiment_factor
         return max(1, int(total_priority))
     
     async def execute_healing_plan(self, plan: HealingPlan) -> HealingResult:

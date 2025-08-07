@@ -534,9 +534,19 @@ Last updated: {datetime.now().strftime('%Y-%m-%d')}
         }
 
 
-# Global GDPR compliance instance
-_gdpr_compliance: Optional[GDPRCompliance] = None
+# Import comprehensive GDPR compliance
+from .gdpr_compliance import (
+    DataProcessingPurpose,
+    LegalBasis, 
+    DataProcessingRecord,
+    GDPRDataProcessor,
+    SentimentAnalysisGDPRWrapper,
+    gdpr_processor,
+    gdpr_sentiment_wrapper
+)
 
+# Global GDPR compliance instance (legacy)
+_gdpr_compliance: Optional[GDPRCompliance] = None
 
 def get_gdpr_compliance(organization_name: str = "Healing Guard", dpo_contact: str = "dpo@healingguard.com") -> GDPRCompliance:
     """Get global GDPR compliance instance."""
@@ -546,3 +556,23 @@ def get_gdpr_compliance(organization_name: str = "Healing Guard", dpo_contact: s
         _gdpr_compliance = GDPRCompliance(organization_name, dpo_contact)
     
     return _gdpr_compliance
+
+# Export both old and new GDPR implementations
+__all__ = [
+    "DataCategory",
+    "ProcessingPurpose", 
+    "DataSubjectRight",
+    "PersonalDataRecord",
+    "DataSubjectRequest",
+    "DataProcessor",
+    "GDPRCompliance",
+    "get_gdpr_compliance",
+    # New comprehensive GDPR exports
+    "DataProcessingPurpose",
+    "LegalBasis",
+    "DataProcessingRecord", 
+    "GDPRDataProcessor",
+    "SentimentAnalysisGDPRWrapper",
+    "gdpr_processor",
+    "gdpr_sentiment_wrapper"
+]

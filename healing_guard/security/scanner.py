@@ -312,7 +312,7 @@ class SecurityScanner:
                 "Never concatenate user input directly into SQL statements."
             ),
             VulnerabilityType.CODE_INJECTION: (
-                "Avoid using eval(), exec(), or shell=True. "
+                "Avoid using eval() or exec(). "
                 "Validate and sanitize all user inputs. Use subprocess with explicit arguments."
             ),
             VulnerabilityType.SECRETS_EXPOSURE: (

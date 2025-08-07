@@ -271,4 +271,8 @@ def create_app() -> FastAPI:
     # Include API routes
     app.include_router(router, prefix="/api/v1")
     
+    # Include sentiment analysis routes
+    from .sentiment_routes import router as sentiment_router
+    app.include_router(sentiment_router, prefix="/api/v1")
+    
     return app
