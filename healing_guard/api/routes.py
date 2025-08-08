@@ -18,7 +18,6 @@ from .exceptions import (
     QuantumPlannerException,
     HealingEngineException
 )
-from .sentiment_routes import router as sentiment_router
 
 logger = logging.getLogger(__name__)
 
