@@ -10,11 +10,34 @@ from functools import wraps
 from typing import Dict, List, Optional, Any, Callable, Deque
 from threading import Lock
 
-import psutil
-from prometheus_client import (
-    Counter, Histogram, Gauge, Info, Enum,
-    CollectorRegistry, generate_latest, CONTENT_TYPE_LATEST
-)
+# Optional dependencies - graceful degradation if not available
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
+
+try:
+    from prometheus_client import (
+        Counter, Histogram, Gauge, Info, Enum,
+        CollectorRegistry, generate_latest, CONTENT_TYPE_LATEST
+    )
+    HAS_PROMETHEUS = True
+except ImportError:
+    HAS_PROMETHEUS = False
+    # Mock classes for when prometheus_client is not available
+    class MockMetric:
+        def __init__(self, *args, **kwargs): pass
+        def inc(self, *args, **kwargs): pass
+        def observe(self, *args, **kwargs): pass
+        def set(self, *args, **kwargs): pass
+        def state(self, *args, **kwargs): pass
+        def info(self, *args, **kwargs): pass
+        def labels(self, *args, **kwargs): return self
+    
+    Counter = Histogram = Gauge = Info = Enum = MockMetric
+    CollectorRegistry = lambda: None
+    def generate_latest(registry=None): return b"# Prometheus client not available"
 
 logger = logging.getLogger(__name__)
 
@@ -407,6 +430,10 @@ class MetricsCollector:
     
     async def _collect_system_metrics(self):
         """Collect system performance metrics."""
+        if not HAS_PSUTIL:
+            logger.debug("psutil not available - skipping system metrics collection")
+            return
+            
         try:
             # CPU metrics
             cpu_percent = psutil.cpu_percent(interval=1)
