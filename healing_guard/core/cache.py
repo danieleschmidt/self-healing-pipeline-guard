@@ -13,9 +13,20 @@ from typing import Any, Dict, List, Optional, Union, Callable
 from collections import OrderedDict
 from threading import Lock
 
-import redis
-import asyncpg
 from contextlib import asynccontextmanager
+
+# Optional dependencies - graceful degradation if not available
+try:
+    import redis
+    HAS_REDIS = True
+except ImportError:
+    HAS_REDIS = False
+
+try:
+    import asyncpg
+    HAS_ASYNCPG = True
+except ImportError:
+    HAS_ASYNCPG = False
 
 logger = logging.getLogger(__name__)
 
@@ -239,12 +250,15 @@ class RedisCache(CacheBackend):
     """Redis-based cache backend."""
     
     def __init__(self, redis_url: str = "redis://localhost:6379/0", key_prefix: str = "hg:"):
+        if not HAS_REDIS:
+            raise ImportError("Redis is not available. Install redis-py to use RedisCache.")
+        
         self.redis_url = redis_url
         self.key_prefix = key_prefix
-        self._redis: Optional[redis.Redis] = None
+        self._redis = None
         self._stats = {"hits": 0, "misses": 0, "errors": 0}
     
-    async def _get_redis(self) -> redis.Redis:
+    async def _get_redis(self):
         """Get Redis connection."""
         if self._redis is None:
             self._redis = redis.from_url(self.redis_url, decode_responses=False)
@@ -392,12 +406,25 @@ class MultiLevelCache(CacheBackend):
     def __init__(
         self,
         l1_cache: Optional[MemoryCache] = None,
-        l2_cache: Optional[RedisCache] = None,
+        l2_cache: Optional[CacheBackend] = None,
         l1_ttl: int = 300,  # 5 minutes
         l2_ttl: int = 3600  # 1 hour
     ):
         self.l1_cache = l1_cache or MemoryCache(max_size=500, default_ttl=l1_ttl)
-        self.l2_cache = l2_cache or RedisCache()
+        
+        # Only use Redis if available
+        if l2_cache is not None:
+            self.l2_cache = l2_cache
+        elif HAS_REDIS:
+            try:
+                self.l2_cache = RedisCache()
+            except ImportError:
+                logger.warning("Redis not available, using memory-only caching")
+                self.l2_cache = MemoryCache(max_size=1000, default_ttl=l2_ttl)
+        else:
+            logger.warning("Redis not available, using memory-only caching")  
+            self.l2_cache = MemoryCache(max_size=1000, default_ttl=l2_ttl)
+            
         self.l1_ttl = l1_ttl
         self.l2_ttl = l2_ttl
         self._stats = {
@@ -496,6 +523,12 @@ class CacheManager:
         }
         key_hash = hashlib.md5(json.dumps(key_data, sort_keys=True, default=str).encode()).hexdigest()
         return f"{prefix}:{key_hash}"
+    
+    def get_cache(self, cache_name: str = None) -> CacheBackend:
+        """Get cache backend instance."""
+        # For now, return the main backend
+        # In a full implementation, this could manage multiple named caches
+        return self.backend
     
     async def get(self, key: str) -> Optional[Any]:
         """Get a value from cache."""

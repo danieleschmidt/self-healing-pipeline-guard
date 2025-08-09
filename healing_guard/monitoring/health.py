@@ -6,14 +6,27 @@ import time
 from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 
-import redis
-import asyncpg
 from fastapi import HTTPException
 from pydantic import BaseModel
 
 from ..core.config import settings
 
 logger = logging.getLogger(__name__)
+
+# Optional dependencies - graceful degradation if not available
+try:
+    import redis
+    HAS_REDIS = True
+except ImportError:
+    HAS_REDIS = False
+    logger.warning("Redis dependency not available - Redis health checks disabled")
+
+try:
+    import asyncpg
+    HAS_ASYNCPG = True
+except ImportError:
+    HAS_ASYNCPG = False
+    logger.warning("asyncpg dependency not available - Database health checks disabled")
 
 
 class HealthStatus(BaseModel):
@@ -35,10 +48,16 @@ class HealthChecker:
         
     async def check_database(self) -> Dict[str, Any]:
         """Check database connectivity and performance."""
+        if not HAS_ASYNCPG:
+            return {
+                "status": "skipped",
+                "details": "asyncpg dependency not available"
+            }
+        
         try:
             start_time = time.time()
             
-            conn = await asyncpg.connect(settings.DATABASE_URL)
+            conn = await asyncpg.connect(settings.database.url)
             
             # Test basic query
             result = await conn.fetchval("SELECT 1")
@@ -67,10 +86,16 @@ class HealthChecker:
     
     async def check_redis(self) -> Dict[str, Any]:
         """Check Redis connectivity and performance."""
+        if not HAS_REDIS:
+            return {
+                "status": "skipped", 
+                "details": "Redis dependency not available"
+            }
+            
         try:
             start_time = time.time()
             
-            redis_client = redis.from_url(settings.REDIS_URL)
+            redis_client = redis.from_url(settings.redis.url)
             
             # Test basic operations
             test_key = "health_check_test"
