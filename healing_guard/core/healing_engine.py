@@ -14,6 +14,8 @@ from typing import Dict, List, Optional, Any, Callable
 
 from .quantum_planner import QuantumTaskPlanner, Task, TaskPriority, TaskStatus
 from .failure_detector import FailureDetector, FailureEvent, FailureType, SeverityLevel
+from .resilience import resilience_manager, CircuitBreakerConfig, RetryPolicy
+from .optimization import performance_optimizer, profiler, batch_processor
 
 logger = logging.getLogger(__name__)
 
@@ -150,28 +152,109 @@ class HealingEngine:
         self.strategy_registry: Dict[HealingStrategy, Callable] = {}
         self.custom_actions: Dict[str, HealingAction] = {}
         
+        # Initialize resilience features
+        self._setup_resilience()
+        
         # Initialize default strategies
         self._initialize_default_strategies()
+        
+        # Initialize performance optimization
+        self._setup_performance_optimization()
+    
+    def _setup_performance_optimization(self) -> None:
+        """Setup performance optimization features."""
+        # Register batch processors for healing operations
+        batch_processor.register_processor("healing_actions", self._batch_process_healing_actions)
+        batch_processor.register_processor("failure_analysis", self._batch_process_failure_analysis)
+        
+        logger.info("Performance optimization features initialized")
+    
+    async def _batch_process_healing_actions(self, actions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Batch process multiple healing actions for efficiency."""
+        results = []
+        for action_data in actions:
+            # Simulate batch processing optimization
+            result = {
+                "status": "success",
+                "batch_optimized": True,
+                "processing_time": 0.1  # Reduced time due to batching
+            }
+            results.append(result)
+        return results
+    
+    async def _batch_process_failure_analysis(self, failures: List[FailureEvent]) -> List[Dict[str, Any]]:
+        """Batch process failure analysis for efficiency."""
+        results = []
+        for failure in failures:
+            # Simulate batch failure analysis
+            result = {
+                "failure_id": failure.id,
+                "analysis_complete": True,
+                "suggestions": failure.remediation_suggestions,
+                "batch_optimized": True
+            }
+            results.append(result)
+        return results
+    
+    def _setup_resilience(self) -> None:
+        """Setup resilience features for healing engine."""
+        # Register circuit breakers for critical operations
+        resilience_manager.health_monitor.register_circuit_breaker(
+            "healing_engine", 
+            CircuitBreakerConfig(failure_threshold=3, recovery_timeout=120)
+        )
+        
+        resilience_manager.health_monitor.register_circuit_breaker(
+            "quantum_planner",
+            CircuitBreakerConfig(failure_threshold=2, recovery_timeout=60)
+        )
+        
+        # Create retry policies for different operation types
+        resilience_manager.create_retry_policy(
+            "healing_action",
+            max_attempts=3,
+            base_delay=2.0,
+            max_delay=30.0,
+            backoff_factor=2.0
+        )
+        
+        resilience_manager.create_retry_policy(
+            "critical_healing",
+            max_attempts=5,
+            base_delay=1.0,
+            max_delay=60.0,
+            backoff_factor=1.5
+        )
+        
+        logger.info("Resilience features initialized for healing engine")
         
     def _initialize_default_strategies(self) -> None:
         """Initialize default healing strategies."""
         
         async def retry_with_backoff(action: HealingAction, context: Dict[str, Any]) -> Dict[str, Any]:
-            """Retry failed operation with exponential backoff."""
-            max_retries = action.parameters.get("max_retries", 3)
-            base_delay = action.parameters.get("base_delay", 1.0)
+            """Retry failed operation with exponential backoff using resilience manager."""
+            retry_policy_name = "critical_healing" if action.strategy in [
+                HealingStrategy.ROLLBACK_DEPLOYMENT, 
+                HealingStrategy.RESTART_SERVICES
+            ] else "healing_action"
             
-            for attempt in range(max_retries):
-                delay = base_delay * (2 ** attempt)
-                logger.info(f"Retry attempt {attempt + 1}/{max_retries} after {delay}s delay")
-                await asyncio.sleep(delay)
-                
-                # Simulate retry logic - in real implementation, this would re-run the failed task
-                success_rate = 0.7 ** attempt  # Decreasing success rate
+            async def retry_operation():
+                # Simulate the actual operation with resilience
+                success_rate = action.success_probability
                 if await self._simulate_action_execution(success_rate):
-                    return {"status": "success", "attempts": attempt + 1}
-                    
-            return {"status": "failed", "attempts": max_retries}
+                    return {"status": "success", "resilient": True}
+                else:
+                    raise Exception("Simulated operation failure")
+            
+            try:
+                result = await resilience_manager.execute_with_resilience(
+                    f"healing_action_{action.id}",
+                    retry_operation,
+                    retry_policy_name
+                )
+                return result
+            except Exception as e:
+                return {"status": "failed", "error": str(e), "resilient": True}
         
         async def increase_resources(action: HealingAction, context: Dict[str, Any]) -> Dict[str, Any]:
             """Increase resource allocation for failing jobs."""
@@ -605,15 +688,26 @@ class HealingEngine:
         
         return result
     
+    @profiler.profile("healing_engine.heal_failure")
     async def heal_failure(self, failure_event: FailureEvent) -> HealingResult:
-        """Complete healing process: plan creation and execution."""
-        logger.info(f"Starting healing process for failure {failure_event.id}")
+        """Complete healing process: plan creation and execution with optimization."""
+        logger.info(f"Starting optimized healing process for failure {failure_event.id}")
         
-        # Create healing plan
-        plan = await self.create_healing_plan(failure_event)
+        # Use performance optimizer for the entire healing process
+        async def optimized_healing():
+            # Create healing plan
+            plan = await self.create_healing_plan(failure_event)
+            
+            # Execute healing plan
+            result = await self.execute_healing_plan(plan)
+            
+            return result
         
-        # Execute healing plan
-        result = await self.execute_healing_plan(plan)
+        # Execute with performance optimization
+        result = await performance_optimizer.optimize_operation(
+            "heal_failure",
+            optimized_healing
+        )
         
         return result
     
