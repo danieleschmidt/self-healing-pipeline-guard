@@ -12,11 +12,29 @@ from collections import defaultdict, deque
 import json
 import uuid
 
-import aioredis
-import aiohttp
-from kubernetes import client as k8s_client, config as k8s_config
-
 logger = logging.getLogger(__name__)
+
+# Optional imports for scaling features
+try:
+    import aioredis
+    AIOREDIS_AVAILABLE = True
+except ImportError:
+    logger.warning("aioredis not available - Redis features disabled")
+    AIOREDIS_AVAILABLE = False
+
+try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError:
+    logger.warning("aiohttp not available - HTTP features disabled")
+    AIOHTTP_AVAILABLE = False
+
+try:
+    from kubernetes import client as k8s_client, config as k8s_config
+    KUBERNETES_AVAILABLE = True
+except ImportError:
+    logger.warning("kubernetes client not available - K8s features disabled")
+    KUBERNETES_AVAILABLE = False
 
 
 class ScalingAction(Enum):
@@ -127,10 +145,11 @@ class AutoScaler:
         # Kubernetes client (if available)
         self.k8s_apps_v1 = None
         self.k8s_custom_objects = None
-        self._init_kubernetes()
+        if KUBERNETES_AVAILABLE:
+            self._init_kubernetes()
         
         # Redis client for distributed coordination
-        self.redis_client: Optional[aioredis.Redis] = None
+        self.redis_client = None
         
         # Statistics
         self.stats = {
@@ -148,6 +167,10 @@ class AutoScaler:
     
     def _init_kubernetes(self):
         """Initialize Kubernetes client if available."""
+        if not KUBERNETES_AVAILABLE:
+            logger.warning("kubernetes client not available - K8s features disabled")
+            return
+        
         try:
             k8s_config.load_incluster_config()
             self.k8s_apps_v1 = k8s_client.AppsV1Api()
@@ -164,6 +187,10 @@ class AutoScaler:
     
     async def init_redis(self, redis_url: str = "redis://localhost:6379/0"):
         """Initialize Redis client for distributed coordination."""
+        if not AIOREDIS_AVAILABLE:
+            logger.warning("aioredis not available - Redis features disabled")
+            return
+        
         try:
             self.redis_client = aioredis.from_url(redis_url)
             await self.redis_client.ping()
@@ -558,8 +585,12 @@ class LoadBalancer:
         selected_id = min(backends.keys(), key=lambda bid: avg_response_time(backends[bid]))
         return selected_id, backends[selected_id]["url"]
     
-    async def make_request(self, path: str, method: str = "GET", **kwargs) -> Optional[aiohttp.ClientResponse]:
+    async def make_request(self, path: str, method: str = "GET", **kwargs):
         """Make a load-balanced request."""
+        if not AIOHTTP_AVAILABLE:
+            logger.error("aiohttp not available - cannot make HTTP requests")
+            return None
+        
         backend_info = self.get_backend()
         if not backend_info:
             logger.warning("No healthy backends available")
@@ -599,6 +630,10 @@ class LoadBalancer:
     
     async def health_check_backend(self, backend_id: str) -> bool:
         """Perform health check on a backend."""
+        if not AIOHTTP_AVAILABLE:
+            logger.warning("aiohttp not available - cannot perform health checks")
+            return True  # Assume healthy if we can't check
+        
         backend = self.backends[backend_id]
         health_url = f"{backend['url'].rstrip('/')}/{backend['health_check_path'].lstrip('/')}"
         
