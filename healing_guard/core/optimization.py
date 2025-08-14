@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class PerformanceMetrics:
-    """Performance metrics for optimization analysis."""
+    """Enhanced performance metrics for optimization analysis."""
     function_name: str
     execution_count: int = 0
     total_time: float = 0.0
@@ -33,9 +33,15 @@ class PerformanceMetrics:
     recent_times: deque = field(default_factory=lambda: deque(maxlen=100))
     error_count: int = 0
     last_execution: Optional[datetime] = None
+    memory_usage: deque = field(default_factory=lambda: deque(maxlen=50))
+    cpu_usage: deque = field(default_factory=lambda: deque(maxlen=50))
+    concurrent_executions: int = 0
+    peak_concurrent: int = 0
+    cache_hits: int = 0
+    cache_misses: int = 0
     
-    def add_execution(self, execution_time: float, had_error: bool = False):
-        """Add a new execution measurement."""
+    def add_execution(self, execution_time: float, had_error: bool = False, memory_mb: float = 0, cpu_percent: float = 0):
+        """Add a new execution measurement with enhanced metrics."""
         self.execution_count += 1
         self.total_time += execution_time
         self.min_time = min(self.min_time, execution_time)
@@ -44,10 +50,86 @@ class PerformanceMetrics:
         self.recent_times.append(execution_time)
         self.last_execution = datetime.now()
         
+        if memory_mb > 0:
+            self.memory_usage.append(memory_mb)
+        if cpu_percent > 0:
+            self.cpu_usage.append(cpu_percent)
+        
         if had_error:
             self.error_count += 1
     
+    def start_concurrent_execution(self):
+        """Mark start of concurrent execution."""
+        self.concurrent_executions += 1
+        self.peak_concurrent = max(self.peak_concurrent, self.concurrent_executions)
+    
+    def end_concurrent_execution(self):
+        """Mark end of concurrent execution."""
+        self.concurrent_executions = max(0, self.concurrent_executions - 1)
+    
+    def record_cache_hit(self):
+        """Record cache hit."""
+        self.cache_hits += 1
+    
+    def record_cache_miss(self):
+        """Record cache miss."""
+        self.cache_misses += 1
+    
+    @property
+    def cache_hit_rate(self) -> float:
+        """Calculate cache hit rate."""
+        total = self.cache_hits + self.cache_misses
+        return self.cache_hits / total if total > 0 else 0.0
+    
+    @property
+    def error_rate(self) -> float:
+        """Calculate error rate."""
+        return self.error_count / self.execution_count if self.execution_count > 0 else 0.0
+    
+    @property
+    def avg_memory_usage(self) -> float:
+        """Get average memory usage in MB."""
+        return sum(self.memory_usage) / len(self.memory_usage) if self.memory_usage else 0.0
+    
+    @property
+    def avg_cpu_usage(self) -> float:
+        """Get average CPU usage percentage."""
+        return sum(self.cpu_usage) / len(self.cpu_usage) if self.cpu_usage else 0.0
+    
     def get_recent_avg(self, window: int = 10) -> float:
+        """Get recent average execution time."""
+        if not self.recent_times:
+            return self.avg_time
+        
+        recent = list(self.recent_times)[-window:]
+        return sum(recent) / len(recent) if recent else self.avg_time
+    
+    def get_trend_analysis(self) -> Dict[str, Any]:
+        """Analyze performance trends."""
+        if len(self.recent_times) < 10:
+            return {"trend": "insufficient_data", "confidence": 0.0}
+        
+        times = list(self.recent_times)
+        mid_point = len(times) // 2
+        early_avg = sum(times[:mid_point]) / mid_point
+        late_avg = sum(times[mid_point:]) / (len(times) - mid_point)
+        
+        if late_avg < early_avg * 0.9:
+            trend = "improving"
+        elif late_avg > early_avg * 1.1:
+            trend = "degrading"
+        else:
+            trend = "stable"
+        
+        confidence = min(1.0, len(times) / 50.0)  # More data = higher confidence
+        
+        return {
+            "trend": trend,
+            "confidence": confidence,
+            "early_avg": early_avg,
+            "late_avg": late_avg,
+            "improvement_ratio": early_avg / late_avg if late_avg > 0 else 1.0
+        }
         """Get average time for recent executions."""
         if not self.recent_times:
             return 0.0
