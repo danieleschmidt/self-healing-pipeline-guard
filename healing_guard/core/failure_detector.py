@@ -15,9 +15,19 @@ from typing import Dict, List, Optional, Set, Any, Tuple
 from collections import Counter, defaultdict, deque
 
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import KMeans
-from sklearn.metrics.pairwise import cosine_similarity
+try:
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.cluster import KMeans
+    from sklearn.metrics.pairwise import cosine_similarity
+    from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+    from sklearn.neural_network import MLPClassifier
+    from sklearn.model_selection import cross_val_score
+    from sklearn.metrics import classification_report, confusion_matrix
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    # Fallback implementations for environments without sklearn
+    SKLEARN_AVAILABLE = False
+    print("Warning: scikit-learn not available, using fallback implementations")
 
 logger = logging.getLogger(__name__)
 
@@ -352,7 +362,19 @@ class FailureDetector:
         return weighted_confidence
     
     def _classify_failure_type(self, logs: str, features: Dict[str, Any]) -> Tuple[FailureType, float, List[str]]:
-        """Classify failure type using pattern matching and ML techniques."""
+        """Classify failure type using enhanced ensemble methods."""
+        # Try ensemble classification first if available
+        if SKLEARN_AVAILABLE and len(self.failure_history) >= 50:
+            try:
+                return self._enhanced_ensemble_classification(logs, features)
+            except Exception as e:
+                logger.warning(f"Ensemble classification failed, falling back: {e}")
+        
+        # Traditional pattern-based classification
+        return self._rule_based_classification(logs, features)
+    
+    def _rule_based_classification(self, logs: str, features: Dict[str, Any]) -> Tuple[FailureType, float, List[str]]:
+        """Traditional rule-based pattern matching classification."""
         best_match = None
         best_confidence = 0.0
         matched_patterns = []
@@ -616,3 +638,224 @@ class FailureDetector:
                         pattern.confidence_threshold = min(0.9, pattern.confidence_threshold + 0.05)
                         
         return True
+    
+    def _enhanced_ensemble_classification(self, logs: str, features: Dict[str, Any]) -> Tuple[FailureType, float, List[str]]:
+        """Advanced ensemble classification using multiple ML algorithms."""
+        if not SKLEARN_AVAILABLE or len(self.failure_history) < 50:
+            return self._rule_based_classification(logs, features)
+        
+        try:
+            # Prepare training data from historical failures
+            X, y = self._prepare_training_data()
+            
+            if len(X) < 10:  # Insufficient training data
+                return self._rule_based_classification(logs, features)
+            
+            # Create ensemble of classifiers
+            classifiers = {
+                'random_forest': RandomForestClassifier(n_estimators=100, random_state=42),
+                'gradient_boosting': GradientBoostingClassifier(n_estimators=100, random_state=42),
+                'neural_network': MLPClassifier(hidden_layer_sizes=(100, 50), max_iter=500, random_state=42)
+            }
+            
+            # Train ensemble
+            trained_models = {}
+            ensemble_predictions = []
+            
+            for name, classifier in classifiers.items():
+                try:
+                    classifier.fit(X, y)
+                    trained_models[name] = classifier
+                    
+                    # Predict current failure
+                    current_features = self._extract_ml_features(logs, features)
+                    prediction_proba = classifier.predict_proba([current_features])[0]
+                    prediction = classifier.predict([current_features])[0]
+                    
+                    ensemble_predictions.append({
+                        'model': name,
+                        'prediction': prediction,
+                        'confidence': max(prediction_proba),
+                        'probabilities': dict(zip(classifier.classes_, prediction_proba))
+                    })
+                    
+                except Exception as e:
+                    logger.warning(f"Classifier {name} failed: {e}")
+                    continue
+            
+            if not ensemble_predictions:
+                return self._rule_based_classification(logs, features)
+            
+            # Ensemble voting with weighted confidence
+            failure_type_votes = defaultdict(float)
+            total_confidence = 0.0
+            
+            for pred in ensemble_predictions:
+                weight = pred['confidence'] ** 2  # Square confidence for better discrimination
+                failure_type_votes[pred['prediction']] += weight
+                total_confidence += weight
+            
+            # Select most voted failure type
+            best_failure_type = max(failure_type_votes.items(), key=lambda x: x[1])[0]
+            ensemble_confidence = failure_type_votes[best_failure_type] / total_confidence if total_confidence > 0 else 0.5
+            
+            # Convert string back to enum
+            try:
+                failure_enum = FailureType(best_failure_type)
+            except ValueError:
+                failure_enum = FailureType.UNKNOWN
+            
+            # Get matched patterns for ensemble result
+            matched_patterns = [f"ensemble_{model['model']}" for model in ensemble_predictions]
+            
+            logger.info(f"Ensemble classification: {failure_enum.value} with {ensemble_confidence:.3f} confidence")
+            return failure_enum, ensemble_confidence, matched_patterns
+            
+        except Exception as e:
+            logger.warning(f"Ensemble classification failed: {e}")
+            return self._rule_based_classification(logs, features)
+    
+    def _prepare_training_data(self) -> Tuple[List[List[float]], List[str]]:
+        """Prepare training data from failure history."""
+        X = []
+        y = []
+        
+        for failure in self.failure_history[-1000:]:  # Use recent history
+            if failure.extracted_features and failure.confidence > 0.7:  # High-confidence samples only
+                features = self._extract_ml_features(failure.raw_logs, failure.extracted_features)
+                X.append(features)
+                y.append(failure.failure_type.value)
+        
+        return X, y
+    
+    def _extract_ml_features(self, logs: str, base_features: Dict[str, Any]) -> List[float]:
+        """Extract numerical features for ML classification."""
+        features = []
+        
+        # Text-based features
+        features.append(base_features.get("log_length", 0) / 10000)  # Normalized
+        features.append(base_features.get("line_count", 0) / 1000)
+        features.append(base_features.get("word_count", 0) / 5000)
+        features.append(base_features.get("total_errors", 0) / 100)
+        features.append(base_features.get("timing_indicators", 0) / 50)
+        features.append(base_features.get("resource_indicators", 0) / 20)
+        features.append(base_features.get("stack_trace_depth", 0) / 100)
+        features.append(len(base_features.get("unique_errors", set())) / 20)
+        
+        # Pattern matching features
+        error_freq = base_features.get("error_frequencies", {})
+        features.extend([
+            error_freq.get("error", 0) / 50,
+            error_freq.get("exception", 0) / 30,
+            error_freq.get("fail(ed|ure)?", 0) / 30,
+            error_freq.get("timeout", 0) / 10,
+            error_freq.get("abort", 0) / 5,
+            error_freq.get("crash", 0) / 5
+        ])
+        
+        # Keyword presence (binary features)
+        keywords = [
+            "memory", "cpu", "disk", "network", "connection",
+            "timeout", "security", "vulnerability", "test",
+            "compile", "syntax", "dependency", "import"
+        ]
+        
+        logs_lower = logs.lower()
+        for keyword in keywords:
+            features.append(1.0 if keyword in logs_lower else 0.0)
+        
+        # Advanced text features
+        features.extend([
+            len(re.findall(r'\d+', logs)) / 1000,  # Number density
+            len(re.findall(r'http[s]?://', logs)) / 10,  # URL density
+            len(re.findall(r'\b[A-Z][a-zA-Z]*Exception\b', logs)) / 20,  # Exception class density
+            len(re.findall(r'at line \d+', logs)) / 50,  # Line number references
+        ])
+        
+        return features
+    
+    def _deep_pattern_analysis(self, logs: str) -> Dict[str, Any]:
+        """Perform deep pattern analysis using advanced text processing."""
+        analysis = {}
+        
+        # Temporal pattern analysis
+        timestamps = re.findall(r'\d{2}:\d{2}:\d{2}', logs)
+        if len(timestamps) > 1:
+            analysis['temporal_density'] = len(timestamps) / len(logs.split('\n'))
+        else:
+            analysis['temporal_density'] = 0.0
+        
+        # Error cascade detection
+        error_lines = [i for i, line in enumerate(logs.split('\n')) 
+                      if any(keyword in line.lower() for keyword in ['error', 'exception', 'failed'])]
+        
+        if len(error_lines) > 1:
+            # Calculate error clustering
+            error_gaps = [error_lines[i+1] - error_lines[i] for i in range(len(error_lines)-1)]
+            analysis['error_clustering'] = sum(1 for gap in error_gaps if gap <= 3) / max(len(error_gaps), 1)
+        else:
+            analysis['error_clustering'] = 0.0
+        
+        # Severity indicator analysis
+        severity_indicators = {
+            'critical': len(re.findall(r'\bcritical\b|\bfatal\b', logs, re.IGNORECASE)),
+            'warning': len(re.findall(r'\bwarn(ing)?\b|\bcaution\b', logs, re.IGNORECASE)),
+            'info': len(re.findall(r'\binfo\b|\bdebug\b', logs, re.IGNORECASE))
+        }
+        
+        total_indicators = sum(severity_indicators.values())
+        if total_indicators > 0:
+            analysis['severity_distribution'] = {
+                k: v / total_indicators for k, v in severity_indicators.items()
+            }
+        else:
+            analysis['severity_distribution'] = {'critical': 0, 'warning': 0, 'info': 0}
+        
+        # Code context analysis
+        code_indicators = {
+            'file_references': len(re.findall(r'\.py|\\.java|\\.js|\\.cpp|\\.c\b', logs)),
+            'function_references': len(re.findall(r'function\s+\w+|def\s+\w+', logs)),
+            'line_numbers': len(re.findall(r'line\s+\d+|:\d+:', logs)),
+            'variable_names': len(re.findall(r'\b[a-z_][a-zA-Z0-9_]*\b', logs))
+        }
+        
+        analysis['code_context_strength'] = sum(code_indicators.values()) / 100  # Normalized
+        
+        return analysis
+    
+    def get_classification_confidence_report(self) -> Dict[str, Any]:
+        """Generate a comprehensive confidence report for classification accuracy."""
+        if not self.failure_history:
+            return {"error": "No failure history available"}
+        
+        # Analyze recent classifications
+        recent_failures = self.failure_history[-100:]  # Last 100 failures
+        
+        # Confidence distribution
+        confidence_bins = {
+            'high': sum(1 for f in recent_failures if f.confidence >= 0.8),
+            'medium': sum(1 for f in recent_failures if 0.5 <= f.confidence < 0.8),
+            'low': sum(1 for f in recent_failures if f.confidence < 0.5)
+        }
+        
+        # Failure type distribution
+        type_distribution = Counter(f.failure_type.value for f in recent_failures)
+        
+        # Average confidence by type
+        avg_confidence_by_type = {}
+        for failure_type in FailureType:
+            type_failures = [f for f in recent_failures if f.failure_type == failure_type]
+            if type_failures:
+                avg_confidence_by_type[failure_type.value] = sum(f.confidence for f in type_failures) / len(type_failures)
+        
+        return {
+            'total_classified': len(recent_failures),
+            'confidence_distribution': confidence_bins,
+            'confidence_percentage': {
+                k: (v / len(recent_failures)) * 100 for k, v in confidence_bins.items()
+            },
+            'failure_type_distribution': dict(type_distribution),
+            'average_confidence_by_type': avg_confidence_by_type,
+            'overall_average_confidence': sum(f.confidence for f in recent_failures) / len(recent_failures),
+            'ensemble_availability': SKLEARN_AVAILABLE and len(self.failure_history) >= 50
+        }

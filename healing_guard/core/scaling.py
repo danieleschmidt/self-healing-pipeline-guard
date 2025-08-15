@@ -36,6 +36,16 @@ except ImportError:
     logger.warning("kubernetes client not available - K8s features disabled")
     KUBERNETES_AVAILABLE = False
 
+try:
+    import numpy as np
+    from sklearn.linear_model import LinearRegression
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.preprocessing import StandardScaler
+    ML_AVAILABLE = True
+except ImportError:
+    logger.warning("ML libraries not available - predictive features disabled")
+    ML_AVAILABLE = False
+
 
 class ScalingAction(Enum):
     """Types of scaling actions."""
@@ -722,6 +732,459 @@ class LoadBalancer:
         return stats
 
 
+class PredictiveAutoScaler:
+    """Advanced predictive auto-scaling using machine learning."""
+    
+    def __init__(self, prediction_horizon: int = 300):
+        self.prediction_horizon = prediction_horizon  # seconds
+        self.metrics_history: List[ScalingMetrics] = []
+        self.prediction_models: Dict[str, Any] = {}
+        self.scaler = StandardScaler() if ML_AVAILABLE else None
+        self.historical_scaling_decisions: List[Dict[str, Any]] = []
+        
+    def add_metrics(self, metrics: ScalingMetrics):
+        """Add metrics to history for training."""
+        self.metrics_history.append(metrics)
+        
+        # Keep only recent history (24 hours worth)
+        max_history = 24 * 60  # 24 hours of minute-level metrics
+        if len(self.metrics_history) > max_history:
+            self.metrics_history = self.metrics_history[-max_history:]
+    
+    def train_prediction_models(self) -> bool:
+        """Train ML models for load prediction."""
+        if not ML_AVAILABLE or len(self.metrics_history) < 100:
+            logger.warning("Insufficient data or ML unavailable for predictive scaling")
+            return False
+        
+        try:
+            # Prepare training data
+            features, targets = self._prepare_training_data()
+            
+            if len(features) < 50:
+                return False
+            
+            # Train models for different metrics
+            metrics_to_predict = ['cpu_utilization', 'memory_utilization', 'request_rate', 'queue_length']
+            
+            for i, metric in enumerate(metrics_to_predict):
+                # Use ensemble of models
+                models = {
+                    'linear': LinearRegression(),
+                    'forest': RandomForestRegressor(n_estimators=50, random_state=42)
+                }
+                
+                target_values = [t[i] for t in targets]
+                
+                # Scale features
+                features_scaled = self.scaler.fit_transform(features)
+                
+                trained_models = {}
+                for model_name, model in models.items():
+                    try:
+                        model.fit(features_scaled, target_values)
+                        trained_models[model_name] = model
+                    except Exception as e:
+                        logger.warning(f"Failed to train {model_name} for {metric}: {e}")
+                
+                if trained_models:
+                    self.prediction_models[metric] = {
+                        'models': trained_models,
+                        'scaler': StandardScaler().fit(features)
+                    }
+            
+            logger.info(f"Trained predictive models for {len(self.prediction_models)} metrics")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to train prediction models: {e}")
+            return False
+    
+    def _prepare_training_data(self) -> Tuple[List[List[float]], List[List[float]]]:
+        """Prepare features and targets for ML training."""
+        features = []
+        targets = []
+        
+        # Use sliding window approach
+        window_size = 10  # Use last 10 metrics points as features
+        
+        for i in range(window_size, len(self.metrics_history)):
+            # Features: time-series window of previous metrics
+            feature_window = []
+            for j in range(i - window_size, i):
+                metric = self.metrics_history[j]
+                feature_window.extend([
+                    metric.cpu_utilization,
+                    metric.memory_utilization,
+                    metric.request_rate,
+                    metric.queue_length / 100.0,  # Normalize
+                    metric.avg_response_time,
+                    metric.error_rate,
+                    metric.active_connections / 1000.0  # Normalize
+                ])
+            
+            # Add time-based features
+            current_metric = self.metrics_history[i]
+            hour_of_day = current_metric.timestamp.hour
+            day_of_week = current_metric.timestamp.weekday()
+            
+            feature_window.extend([
+                np.sin(2 * np.pi * hour_of_day / 24),  # Cyclic encoding
+                np.cos(2 * np.pi * hour_of_day / 24),
+                np.sin(2 * np.pi * day_of_week / 7),
+                np.cos(2 * np.pi * day_of_week / 7)
+            ])
+            
+            features.append(feature_window)
+            
+            # Target: next metric values
+            target_metric = self.metrics_history[i]
+            targets.append([
+                target_metric.cpu_utilization,
+                target_metric.memory_utilization,
+                target_metric.request_rate,
+                target_metric.queue_length
+            ])
+        
+        return features, targets
+    
+    def predict_future_load(self, horizon_minutes: int = 5) -> Dict[str, float]:
+        """Predict future load metrics."""
+        if not self.prediction_models or len(self.metrics_history) < 10:
+            return {}
+        
+        try:
+            predictions = {}
+            
+            # Prepare current features
+            current_features = self._prepare_current_features()
+            
+            for metric, model_info in self.prediction_models.items():
+                models = model_info['models']
+                scaler = model_info['scaler']
+                
+                # Scale features
+                features_scaled = scaler.transform([current_features])
+                
+                # Ensemble prediction
+                ensemble_predictions = []
+                for model_name, model in models.items():
+                    try:
+                        pred = model.predict(features_scaled)[0]
+                        ensemble_predictions.append(pred)
+                    except Exception as e:
+                        logger.warning(f"Prediction failed for {model_name}: {e}")
+                
+                if ensemble_predictions:
+                    # Average ensemble predictions
+                    predictions[metric] = sum(ensemble_predictions) / len(ensemble_predictions)
+            
+            logger.debug(f"Load predictions: {predictions}")
+            return predictions
+            
+        except Exception as e:
+            logger.error(f"Failed to predict future load: {e}")
+            return {}
+    
+    def _prepare_current_features(self) -> List[float]:
+        """Prepare features from current state."""
+        window_size = 10
+        recent_metrics = self.metrics_history[-window_size:]
+        
+        features = []
+        for metric in recent_metrics:
+            features.extend([
+                metric.cpu_utilization,
+                metric.memory_utilization,
+                metric.request_rate,
+                metric.queue_length / 100.0,
+                metric.avg_response_time,
+                metric.error_rate,
+                metric.active_connections / 1000.0
+            ])
+        
+        # Add current time features
+        now = datetime.now()
+        features.extend([
+            np.sin(2 * np.pi * now.hour / 24),
+            np.cos(2 * np.pi * now.hour / 24),
+            np.sin(2 * np.pi * now.weekday() / 7),
+            np.cos(2 * np.pi * now.weekday() / 7)
+        ])
+        
+        return features
+    
+    def get_predictive_scaling_recommendation(self, current_instances: int) -> Dict[str, Any]:
+        """Get scaling recommendation based on predictions."""
+        predictions = self.predict_future_load(horizon_minutes=5)
+        
+        if not predictions:
+            return {"action": ScalingAction.MAINTAIN, "confidence": 0.0, "reason": "no_predictions"}
+        
+        # Analyze predictions
+        predicted_cpu = predictions.get('cpu_utilization', 0)
+        predicted_memory = predictions.get('memory_utilization', 0)
+        predicted_requests = predictions.get('request_rate', 0)
+        predicted_queue = predictions.get('queue_length', 0)
+        
+        # Scaling thresholds
+        scale_up_threshold = 0.7
+        scale_down_threshold = 0.3
+        
+        # Determine scaling action
+        scale_indicators = []
+        
+        if predicted_cpu > scale_up_threshold:
+            scale_indicators.append(("cpu", "up", predicted_cpu))
+        elif predicted_cpu < scale_down_threshold:
+            scale_indicators.append(("cpu", "down", predicted_cpu))
+        
+        if predicted_memory > scale_up_threshold:
+            scale_indicators.append(("memory", "up", predicted_memory))
+        elif predicted_memory < scale_down_threshold:
+            scale_indicators.append(("memory", "down", predicted_memory))
+        
+        if predicted_queue > 50:  # Queue length threshold
+            scale_indicators.append(("queue", "up", predicted_queue))
+        elif predicted_queue < 5:
+            scale_indicators.append(("queue", "down", predicted_queue))
+        
+        # Make scaling decision
+        up_votes = sum(1 for _, action, _ in scale_indicators if action == "up")
+        down_votes = sum(1 for _, action, _ in scale_indicators if action == "down")
+        
+        if up_votes > down_votes and up_votes >= 2:
+            action = ScalingAction.SCALE_UP
+            confidence = min(1.0, up_votes / 3.0)
+            recommended_instances = min(current_instances * 2, current_instances + 3)
+            reason = f"predicted_high_load (cpu: {predicted_cpu:.2f}, mem: {predicted_memory:.2f})"
+        elif down_votes > up_votes and down_votes >= 2:
+            action = ScalingAction.SCALE_DOWN
+            confidence = min(1.0, down_votes / 3.0)
+            recommended_instances = max(1, current_instances - 1)
+            reason = f"predicted_low_load (cpu: {predicted_cpu:.2f}, mem: {predicted_memory:.2f})"
+        else:
+            action = ScalingAction.MAINTAIN
+            confidence = 0.5
+            recommended_instances = current_instances
+            reason = "balanced_predictions"
+        
+        return {
+            "action": action,
+            "recommended_instances": recommended_instances,
+            "confidence": confidence,
+            "reason": reason,
+            "predictions": predictions,
+            "indicators": scale_indicators
+        }
+
+
+class GlobalLoadBalancer:
+    """Global load balancing across multiple regions and availability zones."""
+    
+    def __init__(self):
+        self.regions: Dict[str, Dict[str, Any]] = {}
+        self.global_routing_table: Dict[str, str] = {}
+        self.health_check_interval = 30
+        self.latency_matrix: Dict[Tuple[str, str], float] = {}
+        self.traffic_distribution_strategy = "geographic_proximity"
+        
+    def add_region(self, region_id: str, endpoints: List[str], 
+                   latitude: float, longitude: float,
+                   capacity_weight: float = 1.0) -> None:
+        """Add a region to global load balancing."""
+        self.regions[region_id] = {
+            "endpoints": endpoints,
+            "latitude": latitude,
+            "longitude": longitude,
+            "capacity_weight": capacity_weight,
+            "current_load": 0.0,
+            "healthy_endpoints": set(endpoints),
+            "last_health_check": datetime.now(),
+            "total_requests": 0,
+            "avg_response_time": 0.0,
+            "error_rate": 0.0
+        }
+        
+        logger.info(f"Added region {region_id} with {len(endpoints)} endpoints")
+    
+    def calculate_geographic_distance(self, lat1: float, lon1: float, 
+                                    lat2: float, lon2: float) -> float:
+        """Calculate geographic distance using Haversine formula."""
+        import math
+        
+        # Convert to radians
+        lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+        
+        # Haversine formula
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        a = (math.sin(dlat/2)**2 + 
+             math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2)
+        c = 2 * math.asin(math.sqrt(a))
+        
+        # Earth's radius in km
+        r = 6371
+        return c * r
+    
+    def select_optimal_region(self, client_lat: Optional[float] = None,
+                            client_lon: Optional[float] = None,
+                            client_ip: Optional[str] = None) -> Optional[str]:
+        """Select optimal region for client request."""
+        if not self.regions:
+            return None
+        
+        healthy_regions = [
+            region_id for region_id, region in self.regions.items()
+            if region["healthy_endpoints"]
+        ]
+        
+        if not healthy_regions:
+            return None
+        
+        if len(healthy_regions) == 1:
+            return healthy_regions[0]
+        
+        # Geographic proximity strategy
+        if self.traffic_distribution_strategy == "geographic_proximity" and client_lat and client_lon:
+            best_region = None
+            min_distance = float('inf')
+            
+            for region_id in healthy_regions:
+                region = self.regions[region_id]
+                distance = self.calculate_geographic_distance(
+                    client_lat, client_lon,
+                    region["latitude"], region["longitude"]
+                )
+                
+                # Factor in current load
+                load_penalty = region["current_load"] * 100  # km equivalent
+                adjusted_distance = distance + load_penalty
+                
+                if adjusted_distance < min_distance:
+                    min_distance = adjusted_distance
+                    best_region = region_id
+            
+            return best_region
+        
+        # Load-based strategy
+        elif self.traffic_distribution_strategy == "load_balanced":
+            # Weighted random selection based on available capacity
+            weights = []
+            for region_id in healthy_regions:
+                region = self.regions[region_id]
+                available_capacity = region["capacity_weight"] * (1.0 - region["current_load"])
+                weights.append(max(0.1, available_capacity))  # Minimum weight
+            
+            if sum(weights) == 0:
+                return healthy_regions[0]  # Fallback
+            
+            # Weighted random selection
+            import random
+            total_weight = sum(weights)
+            random_value = random.uniform(0, total_weight)
+            
+            cumulative_weight = 0
+            for i, region_id in enumerate(healthy_regions):
+                cumulative_weight += weights[i]
+                if random_value <= cumulative_weight:
+                    return region_id
+        
+        # Fallback to first healthy region
+        return healthy_regions[0]
+    
+    def update_region_metrics(self, region_id: str, load: float, 
+                            response_time: float, error_rate: float) -> None:
+        """Update region performance metrics."""
+        if region_id not in self.regions:
+            return
+        
+        region = self.regions[region_id]
+        region["current_load"] = load
+        region["avg_response_time"] = response_time
+        region["error_rate"] = error_rate
+        region["total_requests"] += 1
+    
+    async def perform_global_health_checks(self) -> Dict[str, Any]:
+        """Perform health checks across all regions."""
+        results = {}
+        
+        for region_id, region in self.regions.items():
+            healthy_count = 0
+            total_count = len(region["endpoints"])
+            
+            for endpoint in region["endpoints"]:
+                try:
+                    if AIOHTTP_AVAILABLE:
+                        async with aiohttp.ClientSession() as session:
+                            async with session.get(
+                                f"{endpoint}/health",
+                                timeout=aiohttp.ClientTimeout(total=10)
+                            ) as response:
+                                if response.status < 400:
+                                    healthy_count += 1
+                                    region["healthy_endpoints"].add(endpoint)
+                                else:
+                                    region["healthy_endpoints"].discard(endpoint)
+                    else:
+                        # Assume healthy if no HTTP client available
+                        healthy_count += 1
+                        region["healthy_endpoints"].add(endpoint)
+                        
+                except Exception as e:
+                    logger.warning(f"Health check failed for {endpoint}: {e}")
+                    region["healthy_endpoints"].discard(endpoint)
+            
+            region["last_health_check"] = datetime.now()
+            
+            results[region_id] = {
+                "healthy_endpoints": healthy_count,
+                "total_endpoints": total_count,
+                "health_ratio": healthy_count / total_count if total_count > 0 else 0,
+                "current_load": region["current_load"],
+                "avg_response_time": region["avg_response_time"]
+            }
+        
+        return results
+    
+    def get_global_status(self) -> Dict[str, Any]:
+        """Get comprehensive global load balancer status."""
+        total_regions = len(self.regions)
+        healthy_regions = sum(1 for region in self.regions.values() if region["healthy_endpoints"])
+        
+        total_endpoints = sum(len(region["endpoints"]) for region in self.regions.values())
+        healthy_endpoints = sum(len(region["healthy_endpoints"]) for region in self.regions.values())
+        
+        avg_load = sum(region["current_load"] for region in self.regions.values()) / max(total_regions, 1)
+        avg_response_time = sum(region["avg_response_time"] for region in self.regions.values()) / max(total_regions, 1)
+        
+        return {
+            "total_regions": total_regions,
+            "healthy_regions": healthy_regions,
+            "region_health_ratio": healthy_regions / max(total_regions, 1),
+            "total_endpoints": total_endpoints,
+            "healthy_endpoints": healthy_endpoints,
+            "endpoint_health_ratio": healthy_endpoints / max(total_endpoints, 1),
+            "global_average_load": avg_load,
+            "global_average_response_time": avg_response_time,
+            "traffic_distribution_strategy": self.traffic_distribution_strategy,
+            "regions": {
+                region_id: {
+                    "endpoints": len(region["endpoints"]),
+                    "healthy_endpoints": len(region["healthy_endpoints"]),
+                    "current_load": region["current_load"],
+                    "capacity_weight": region["capacity_weight"],
+                    "avg_response_time": region["avg_response_time"],
+                    "error_rate": region["error_rate"],
+                    "location": (region["latitude"], region["longitude"])
+                }
+                for region_id, region in self.regions.items()
+            }
+        }
+
+
 # Global instances
 auto_scaler = AutoScaler()
 load_balancer = LoadBalancer()
+predictive_scaler = PredictiveAutoScaler()
+global_balancer = GlobalLoadBalancer()
