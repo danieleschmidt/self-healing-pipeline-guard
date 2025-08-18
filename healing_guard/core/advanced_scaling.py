@@ -111,7 +111,7 @@ class ScalingMetrics:
         self.error_rates.append(error_rate)
     
     def get_trend(self, metric_name: str) -> Tuple[str, float]:
-        \"\"\"Get trend analysis for a metric.\"\"\"
+        """Get trend analysis for a metric."""
         metric_data = getattr(self, metric_name, None)
         if not metric_data or len(metric_data) < 10:
             return "stable", 0.0

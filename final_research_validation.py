@@ -19,7 +19,8 @@ import random
 from typing import Dict, List, Any
 
 # Import actual components with correct APIs
-from healing_guard.core.failure_detector import FailureDetector, FailureContext
+from healing_guard.core.failure_detector import FailureDetector, FailureEvent
+from healing_guard.models.healing import HealingResult
 from healing_guard.core.healing_engine import HealingEngine
 
 class FinalResearchValidator:
@@ -87,7 +88,7 @@ class FinalResearchValidator:
                 start_time = time.time()
                 
                 # Create failure context for detection
-                context = FailureContext(
+                event = FailureEvent(
                     pipeline_id=f"test_pipeline_{i}",
                     job_id=f"job_{i}",
                     stage="test",
@@ -266,7 +267,7 @@ class FinalResearchValidator:
             detection_tasks = []
             
             for i, log in enumerate(test_logs):
-                context = FailureContext(
+                event = FailureEvent(
                     pipeline_id=f"bench_pipeline_{i}",
                     job_id=f"bench_job_{i}",
                     stage="benchmark",
@@ -363,7 +364,7 @@ class FinalResearchValidator:
                 print(f"  🔄 E2E Test {i+1}: {scenario['name']}")
                 
                 # Step 1: Failure Detection
-                context = FailureContext(
+                event = FailureEvent(
                     pipeline_id=f"e2e_pipeline_{i}",
                     job_id=f"e2e_job_{i}",
                     stage="e2e_test",
