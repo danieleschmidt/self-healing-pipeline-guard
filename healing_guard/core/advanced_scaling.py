@@ -16,6 +16,7 @@ from typing import Dict, List, Optional, Any, Callable, Tuple
 from collections import deque, defaultdict
 import threading
 import statistics
+import multiprocessing
 
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
@@ -157,11 +158,11 @@ class PredictiveScaler:
         }
     
     def update_metrics(self, cpu: float, memory: float, req_rate: float, resp_time: float, queue_depth: int, error_rate: float):
-        \"\"\"Update system metrics for scaling decisions.\"\"\"
+        """Update system metrics for scaling decisions."""
         self.metrics.add_sample(cpu, memory, req_rate, resp_time, queue_depth, error_rate)
     
     def predict_scaling_need(self) -> Tuple[ScalingDirection, float, Dict[str, Any]]:
-        \"\"\"Predict if scaling is needed based on current trends.\"\"\"
+        """Predict if scaling is needed based on current trends."""
         if len(self.metrics.cpu_usage) < 10:
             return ScalingDirection.STABLE, 0.0, {"reason": "insufficient_data"}
         
@@ -214,7 +215,7 @@ class PredictiveScaler:
             return ScalingDirection.STABLE, max(up_weight, down_weight), {"analysis": analysis, "signals": scaling_signals}
     
     def should_scale(self) -> bool:
-        \"\"\"Check if scaling action should be taken based on cooldown.\"\"\"
+        """Check if scaling action should be taken based on cooldown."""
         if not self.last_scaling_action:
             return True
         
@@ -222,7 +223,7 @@ class PredictiveScaler:
         return time_since_last >= self.scale_cooldown
     
     def record_scaling_action(self, direction: ScalingDirection, reason: Dict[str, Any]):
-        \"\"\"Record a scaling action.\"\"\"
+        """Record a scaling action."""
         self.last_scaling_action = datetime.now()
         self.scaling_history.append({
             "timestamp": self.last_scaling_action,
@@ -236,7 +237,7 @@ class PredictiveScaler:
 
 
 class AdaptiveLoadBalancer:
-    \"\"\"Adaptive load balancer with multiple strategies.\"\"\"
+    """Adaptive load balancer with multiple strategies."""
     
     def __init__(self, strategy: LoadBalancingStrategy = LoadBalancingStrategy.ADAPTIVE):
         self.strategy = strategy
@@ -251,24 +252,24 @@ class AdaptiveLoadBalancer:
         self.last_strategy_evaluation = time.time()
     
     def add_node(self, node: WorkerNode):
-        \"\"\"Add a worker node to the pool.\"\"\"
+        """Add a worker node to the pool."""
         with self._lock:
             self.nodes[node.id] = node
             logger.info(f"Added worker node {node.id} with capacity {node.capacity}")
     
     def remove_node(self, node_id: str):
-        \"\"\"Remove a worker node from the pool.\"\"\"
+        """Remove a worker node from the pool."""
         with self._lock:
             if node_id in self.nodes:
                 del self.nodes[node_id]
                 logger.info(f"Removed worker node {node_id}")
     
     def get_healthy_nodes(self) -> List[WorkerNode]:
-        \"\"\"Get list of healthy nodes.\"\"\"
+        """Get list of healthy nodes."""
         return [node for node in self.nodes.values() if node.is_healthy]
     
     def select_node(self, request_context: Dict[str, Any] = None) -> Optional[WorkerNode]:
-        \"\"\"Select optimal node based on current strategy.\"\"\"
+        """Select optimal node based on current strategy."""
         healthy_nodes = self.get_healthy_nodes()
         if not healthy_nodes:
             return None
@@ -292,14 +293,14 @@ class AdaptiveLoadBalancer:
             return self._least_connections_select(healthy_nodes)  # Default fallback
     
     def _round_robin_select(self, nodes: List[WorkerNode]) -> WorkerNode:
-        \"\"\"Round robin node selection.\"\"\"
+        """Round robin node selection."""
         with self._lock:
             self.request_counter += 1
             index = self.request_counter % len(nodes)
             return nodes[index]
     
     def _weighted_round_robin_select(self, nodes: List[WorkerNode]) -> WorkerNode:
-        \"\"\"Weighted round robin based on node capacity.\"\"\"
+        """Weighted round robin based on node capacity."""
         total_weight = sum(node.capacity for node in nodes)
         target_weight = (self.request_counter % total_weight) + 1
         
@@ -313,15 +314,15 @@ class AdaptiveLoadBalancer:
         return nodes[0]  # Fallback
     
     def _least_connections_select(self, nodes: List[WorkerNode]) -> WorkerNode:
-        \"\"\"Select node with least active connections.\"\"\"
+        """Select node with least active connections."""
         return min(nodes, key=lambda n: n.current_load)
     
     def _least_response_time_select(self, nodes: List[WorkerNode]) -> WorkerNode:
-        \"\"\"Select node with lowest average response time.\"\"\"
+        """Select node with lowest average response time."""
         return min(nodes, key=lambda n: n.avg_response_time)
     
     def _consistent_hash_select(self, nodes: List[WorkerNode], context: Dict[str, Any] = None) -> WorkerNode:
-        \"\"\"Consistent hashing for sticky sessions.\"\"\"
+        """Consistent hashing for sticky sessions."""
         if not context or "session_id" not in context:
             return self._least_connections_select(nodes)
         
@@ -330,7 +331,7 @@ class AdaptiveLoadBalancer:
         return nodes[hash_value]
     
     def _maybe_adapt_strategy(self):
-        \"\"\"Evaluate and potentially change load balancing strategy.\"\"\"
+        """Evaluate and potentially change load balancing strategy."""
         current_time = time.time()
         if current_time - self.last_strategy_evaluation < self.strategy_evaluation_interval:
             return
@@ -362,7 +363,7 @@ class AdaptiveLoadBalancer:
             self.current_strategy = best_strategy
     
     def record_request_result(self, node_id: str, response_time: float, had_error: bool = False):
-        \"\"\"Record the result of a request for analytics.\"\"\"
+        """Record the result of a request for analytics."""
         if node_id in self.nodes:
             node = self.nodes[node_id]
             node.update_metrics(response_time, had_error)
@@ -371,7 +372,7 @@ class AdaptiveLoadBalancer:
             self.strategy_performance[self.current_strategy.value].append(response_time)
     
     def get_load_balancer_stats(self) -> Dict[str, Any]:
-        \"\"\"Get load balancer statistics.\"\"\"
+        """Get load balancer statistics."""
         healthy_nodes = self.get_healthy_nodes()
         total_capacity = sum(node.capacity for node in healthy_nodes)
         total_load = sum(node.current_load for node in healthy_nodes)
@@ -402,7 +403,7 @@ class AdaptiveLoadBalancer:
 
 
 class ResourceOptimizer:
-    \"\"\"Intelligent resource optimization and allocation.\"\"\"
+    """Intelligent resource optimization and allocation."""
     
     def __init__(self):
         self.resource_pools: Dict[str, Dict[str, Any]] = {}
@@ -418,7 +419,7 @@ class ResourceOptimizer:
         self.resource_usage: Dict[str, deque] = defaultdict(lambda: deque(maxlen=100))
     
     def create_resource_pool(self, pool_name: str, pool_type: str, initial_size: int, max_size: int, config: Dict[str, Any] = None):
-        \"\"\"Create a new resource pool.\"\"\"
+        """Create a new resource pool."""
         self.resource_pools[pool_name] = {
             "type": pool_type,
             "current_size": initial_size,
@@ -433,7 +434,7 @@ class ResourceOptimizer:
         logger.info(f"Created resource pool '{pool_name}' of type '{pool_type}' with size {initial_size}")
     
     def allocate_resource(self, pool_name: str, duration_estimate: float = None) -> Optional[str]:
-        \"\"\"Allocate a resource from the pool.\"\"\"
+        """Allocate a resource from the pool."""
         if pool_name not in self.resource_pools:
             return None
         
@@ -459,7 +460,7 @@ class ResourceOptimizer:
         return resource_id
     
     def release_resource(self, pool_name: str, resource_id: str, actual_duration: float = None):
-        \"\"\"Release a resource back to the pool.\"\"\"
+        """Release a resource back to the pool."""
         if pool_name not in self.resource_pools:
             return
         
@@ -479,7 +480,7 @@ class ResourceOptimizer:
                 break
     
     def _expand_pool(self, pool_name: str, count: int):
-        \"\"\"Expand resource pool size.\"\"\"
+        """Expand resource pool size."""
         pool = self.resource_pools[pool_name]
         new_size = min(pool["max_size"], pool["current_size"] + count)
         
@@ -491,7 +492,7 @@ class ResourceOptimizer:
             logger.info(f"Expanded pool '{pool_name}' from {old_size} to {new_size}")
     
     def _shrink_pool(self, pool_name: str, count: int):
-        \"\"\"Shrink resource pool size.\"\"\"
+        """Shrink resource pool size."""
         pool = self.resource_pools[pool_name]
         new_size = max(pool["min_size"], pool["current_size"] - count)
         
@@ -503,7 +504,7 @@ class ResourceOptimizer:
             logger.info(f"Shrunk pool '{pool_name}' from {old_size} to {new_size}")
     
     def optimize_resources(self):
-        \"\"\"Optimize resource allocation across all pools.\"\"\"
+        """Optimize resource allocation across all pools."""
         current_time = time.time()
         if current_time - self.last_optimization < self.optimization_interval:
             return
@@ -514,7 +515,7 @@ class ResourceOptimizer:
             self._optimize_pool(pool_name, pool)
     
     def _optimize_pool(self, pool_name: str, pool: Dict[str, Any]):
-        \"\"\"Optimize individual resource pool.\"\"\"
+        """Optimize individual resource pool."""
         usage_data = self.resource_usage.get(pool_name, deque())
         
         if len(usage_data) < 10:
@@ -540,7 +541,7 @@ class ResourceOptimizer:
         logger.debug(f"Pool '{pool_name}' optimization: utilization={current_utilization:.2f}, trend={usage_trend}")
     
     def _calculate_usage_trend(self, usage_data: deque) -> str:
-        \"\"\"Calculate usage trend from historical data.\"\"\"
+        """Calculate usage trend from historical data."""
         if len(usage_data) < 20:
             return "stable"
         
@@ -557,7 +558,7 @@ class ResourceOptimizer:
             return "stable"
     
     def get_optimization_stats(self) -> Dict[str, Any]:
-        \"\"\"Get resource optimization statistics.\"\"\"
+        """Get resource optimization statistics."""
         pool_stats = {}
         
         for pool_name, pool in self.resource_pools.items():
@@ -584,7 +585,7 @@ class ResourceOptimizer:
 
 
 class AutoScalingOrchestrator:
-    \"\"\"Main orchestrator for auto-scaling and load balancing.\"\"\"
+    """Main orchestrator for auto-scaling and load balancing."""
     
     def __init__(self):
         self.predictive_scaler = PredictiveScaler()
@@ -604,7 +605,7 @@ class AutoScalingOrchestrator:
         self._initialize_default_nodes()
     
     def _initialize_default_nodes(self):
-        \"\"\"Initialize default worker nodes.\"\"\"
+        """Initialize default worker nodes."""
         # Add default local node
         local_node = WorkerNode(
             id="local_primary",
@@ -624,7 +625,7 @@ class AutoScalingOrchestrator:
         )
     
     def start_monitoring(self):
-        \"\"\"Start auto-scaling monitoring.\"\"\"
+        """Start auto-scaling monitoring."""
         if self.monitoring_active:
             return
         
@@ -635,7 +636,7 @@ class AutoScalingOrchestrator:
         logger.info("Started auto-scaling monitoring")
     
     def stop_monitoring(self):
-        \"\"\"Stop auto-scaling monitoring.\"\"\"
+        """Stop auto-scaling monitoring."""
         self.monitoring_active = False
         if self.monitoring_thread:
             self.monitoring_thread.join(timeout=10)
@@ -643,7 +644,7 @@ class AutoScalingOrchestrator:
         logger.info("Stopped auto-scaling monitoring")
     
     def _monitoring_loop(self):
-        \"\"\"Main monitoring loop for auto-scaling.\"\"\"
+        """Main monitoring loop for auto-scaling."""
         while self.monitoring_active:
             try:
                 self._collect_system_metrics()
@@ -657,7 +658,7 @@ class AutoScalingOrchestrator:
                 time.sleep(self.monitoring_interval)
     
     def _collect_system_metrics(self):
-        \"\"\"Collect current system metrics.\"\"\"
+        """Collect current system metrics."""
         try:
             cpu_usage = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
@@ -692,7 +693,7 @@ class AutoScalingOrchestrator:
             logger.error(f"Error collecting system metrics: {e}")
     
     def _evaluate_scaling_decisions(self):
-        \"\"\"Evaluate and execute scaling decisions.\"\"\"
+        """Evaluate and execute scaling decisions."""
         if not self.predictive_scaler.should_scale():
             return
         
@@ -713,13 +714,13 @@ class AutoScalingOrchestrator:
         self.predictive_scaler.record_scaling_action(direction, analysis)
     
     def register_scaling_callbacks(self, scale_up: Callable, scale_down: Callable):
-        \"\"\"Register callbacks for scaling actions.\"\"\"
+        """Register callbacks for scaling actions."""
         self.scale_up_callback = scale_up
         self.scale_down_callback = scale_down
         logger.info("Registered scaling callbacks")
     
     def get_comprehensive_stats(self) -> Dict[str, Any]:
-        \"\"\"Get comprehensive auto-scaling statistics.\"\"\"
+        """Get comprehensive auto-scaling statistics."""
         return {
             "timestamp": datetime.now().isoformat(),
             "monitoring_active": self.monitoring_active,
@@ -738,4 +739,9 @@ class AutoScalingOrchestrator:
 
 
 # Global auto-scaling orchestrator instance
-auto_scaler = AutoScalingOrchestrator()
+# Global instance factory function
+def get_auto_scaler() -> AutoScalingOrchestrator:
+    """Get or create auto-scaler instance."""
+    if not hasattr(get_auto_scaler, '_instance'):
+        get_auto_scaler._instance = AutoScalingOrchestrator()
+    return get_auto_scaler._instance
