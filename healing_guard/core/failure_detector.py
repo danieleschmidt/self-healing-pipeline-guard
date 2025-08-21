@@ -32,6 +32,36 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+class SeverityLevel(Enum):
+    """Severity levels for failures."""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+class FailureClassification:
+    """Classification result for a pipeline failure."""
+    
+    def __init__(self, failure_type: 'FailureType', confidence: float, 
+                 matched_patterns: List[str], remediation_suggestions: List[str]):
+        self.failure_type = failure_type
+        self.confidence = confidence
+        self.matched_patterns = matched_patterns
+        self.remediation_suggestions = remediation_suggestions
+        self.timestamp = datetime.now()
+        self.severity = self._calculate_severity()
+    
+    def _calculate_severity(self) -> 'SeverityLevel':
+        """Calculate severity based on failure type and confidence."""
+        if self.failure_type in [FailureType.SECURITY_VULNERABILITY, FailureType.DATA_CORRUPTION]:
+            return SeverityLevel.HIGH
+        elif self.failure_type in [FailureType.OOM_ERROR, FailureType.NETWORK_TIMEOUT]:
+            return SeverityLevel.MEDIUM
+        else:
+            return SeverityLevel.LOW
+
+
 class FailureType(Enum):
     """Types of pipeline failures."""
     FLAKY_TEST = "flaky_test"

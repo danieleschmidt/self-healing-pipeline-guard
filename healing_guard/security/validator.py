@@ -420,8 +420,8 @@ class SecurityValidator:
             size = sys.getsizeof(str(data))
             if size > max_size:
                 errors.append(f"Input size ({size} bytes) exceeds maximum allowed size ({max_size} bytes)")
-        except Exception:
-            pass  # Size check failed, but don't fail validation for this
+        except Exception as e:
+            logger.debug(f"Size check failed: {e}")  # Size check failed, but don't fail validation for this
     
     def _check_nested_depth(self, data: Any, errors: List[str], max_depth: int = 10, current_depth: int = 0):
         """Check nesting depth to prevent stack overflow attacks."""

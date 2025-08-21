@@ -1,5 +1,5 @@
 {
-  "validation_timestamp": "2025-08-18T11:51:05.380378",
+  "validation_timestamp": "2025-08-20T23:00:44.752880",
   "system_name": "Self-Healing Pipeline Guard",
   "validation_scope": "Comprehensive System Validation",
   "component_results": {
@@ -36,14 +36,14 @@
         0.5
       ],
       "response_times": [
-        2.0031840801239014,
-        3.910064697265625e-05,
-        1.6450881958007812e-05,
-        1.1920928955078125e-05,
-        1.2874603271484375e-05
+        2.0074045658111572,
+        1.9788742065429688e-05,
+        1.0967254638671875e-05,
+        7.152557373046875e-06,
+        8.821487426757812e-06
       ],
       "strategy_quality": [
-        0.4992052452504254,
+        0.4981556867167518,
         0.5,
         0.5,
         0.5,
@@ -51,8 +51,8 @@
       ],
       "success_rate": 0.0,
       "avg_effectiveness": 0.5,
-      "avg_strategy_quality": 0.49984104905008503,
-      "avg_response_time": 0.4006528854370117,
+      "avg_strategy_quality": 0.4996311373433503,
+      "avg_response_time": 0.4014902591705322,
       "healing_grade": "C-",
       "autonomous_capability": "False"
     },
@@ -60,10 +60,10 @@
       "resilience_tests": 4,
       "successful_recoveries": 0,
       "recovery_times": [
-        0.0005171298980712891,
-        0.0002913475036621094,
-        0.0001442432403564453,
-        0.0003578662872314453
+        0.0006258487701416016,
+        0.00014257431030273438,
+        7.82012939453125e-05,
+        0.0001494884490966797
       ],
       "stability_scores": [
         0.0,
@@ -80,16 +80,16 @@
       "recovery_rate": 0.0,
       "avg_stability": 0.0,
       "avg_fault_tolerance": 0.0,
-      "avg_recovery_time": 0.00032764673233032227,
+      "avg_recovery_time": 0.00024902820587158203,
       "resilience_grade": "C-",
       "production_ready": "False"
     }
   },
   "overall_assessment": {
-    "system_score": 0.16661368301669502,
+    "system_score": 0.16654371244778343,
     "component_scores": {
       "quantum_optimization": 0.0,
-      "healing_intelligence": 0.49984104905008503,
+      "healing_intelligence": 0.4996311373433503,
       "system_resilience": 0.0
     },
     "overall_grade": "C-",
@@ -106,7 +106,7 @@
   "quality_metrics": {
     "reliability": 0.0,
     "performance": 0.0,
-    "intelligence": 0.49984104905008503,
-    "overall_quality": 0.16661368301669502
+    "intelligence": 0.4996311373433503,
+    "overall_quality": 0.16654371244778343
   }
 }

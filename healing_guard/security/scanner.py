@@ -282,7 +282,7 @@ class SecurityScanner:
                         # Search for pattern in each line
                         for line_num, line in enumerate(lines, 1):
                             if re.search(pattern, line):
-                                vuln_id = hashlib.md5(
+                                vuln_id = hashlib.sha256(
                                     f"{file_path}:{line_num}:{pattern}".encode()
                                 ).hexdigest()[:12]
                                 
@@ -610,7 +610,7 @@ class VulnerabilityScanner:
             for line_num, line in enumerate(lines, 1):
                 for pattern_config in container_patterns:
                     if re.search(pattern_config["pattern"], line):
-                        vuln_id = hashlib.md5(
+                        vuln_id = hashlib.sha256(
                             f"{dockerfile_path}:{line_num}:{pattern_config['pattern']}".encode()
                         ).hexdigest()[:12]
                         

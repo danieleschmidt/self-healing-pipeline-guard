@@ -1,7 +1,7 @@
 """Internationalization (i18n) support for global deployment."""
 
 from .translator import Translator, get_translator
-from .localization import LocalizationManager, get_localization_manager
+# from .localization import LocalizationManager, get_localization_manager  # Future enhancement
 
 __all__ = [
     "Translator",
