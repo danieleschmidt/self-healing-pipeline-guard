@@ -1,0 +1,32 @@
+{
+  "total_failures": 5,
+  "successful_healings": 3,
+  "success_rate": 0.6,
+  "total_duration": 1.382030725479126,
+  "strategy_effectiveness": {
+    "retry": {
+      "total": 2,
+      "successful": 2
+    },
+    "check": {
+      "total": 1,
+      "successful": 0
+    },
+    "increase": {
+      "total": 1,
+      "successful": 1
+    },
+    "lint": {
+      "total": 1,
+      "successful": 1
+    },
+    "clear": {
+      "total": 1,
+      "successful": 1
+    },
+    "update": {
+      "total": 1,
+      "successful": 0
+    }
+  }
+}

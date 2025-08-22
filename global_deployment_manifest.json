@@ -1,0 +1,307 @@
+{
+  "deployment_id": "10b57f60-1a07-4b81-a9d1-d8c1c9f2149c",
+  "created_at": "2025-08-22T13:54:14.480283+00:00",
+  "target_regions": [
+    "north_america",
+    "europe",
+    "asia_pacific"
+  ],
+  "target_platforms": [
+    "docker",
+    "kubernetes",
+    "aws",
+    "azure"
+  ],
+  "global_configuration": {
+    "primary_region": "north_america",
+    "failover_regions": [
+      "europe",
+      "asia_pacific"
+    ],
+    "data_replication_strategy": "multi_region_active_active",
+    "load_balancing_strategy": "geography_based",
+    "compliance_frameworks": [
+      "gdpr",
+      "ccpa",
+      "soc2",
+      "iso27001",
+      "hipaa",
+      "pci_dss"
+    ]
+  },
+  "regional_configurations": {
+    "north_america": {
+      "data_residency": {
+        "data_must_stay_in_region": false,
+        "approved_countries": [
+          "US",
+          "CA"
+        ],
+        "encryption_at_rest": true,
+        "encryption_in_transit": true,
+        "key_management": "KMS_required"
+      },
+      "encryption": {
+        "minimum_key_length": 256,
+        "approved_algorithms": [
+          "AES-256-GCM",
+          "AES-256-CBC"
+        ],
+        "key_rotation_days": 365,
+        "perfect_forward_secrecy": false
+      },
+      "audit_retention_days": 2555,
+      "supported_languages": [
+        "en",
+        "es",
+        "fr",
+        "de",
+        "ja",
+        "zh_CN",
+        "ar"
+      ],
+      "timezone": "America/New_York",
+      "regulatory_contacts": {
+        "data_protection_authority": "FTC",
+        "contact_email": "privacy@company.com",
+        "emergency_contact": "+1-800-555-0199"
+      }
+    },
+    "europe": {
+      "data_residency": {
+        "data_must_stay_in_region": true,
+        "approved_countries": [
+          "DE",
+          "FR",
+          "NL",
+          "IE",
+          "SE"
+        ],
+        "encryption_at_rest": true,
+        "encryption_in_transit": true,
+        "key_management": "HSM_required"
+      },
+      "encryption": {
+        "minimum_key_length": 256,
+        "approved_algorithms": [
+          "AES-256-GCM",
+          "ChaCha20-Poly1305"
+        ],
+        "key_rotation_days": 90,
+        "perfect_forward_secrecy": true
+      },
+      "audit_retention_days": 2555,
+      "supported_languages": [
+        "en",
+        "es",
+        "fr",
+        "de",
+        "ja",
+        "zh_CN",
+        "ar"
+      ],
+      "timezone": "Europe/London",
+      "regulatory_contacts": {
+        "data_protection_authority": "ICO",
+        "contact_email": "dpo@company.com",
+        "emergency_contact": "+44-800-555-0199"
+      }
+    },
+    "asia_pacific": {
+      "data_residency": {
+        "data_must_stay_in_region": true,
+        "approved_countries": [
+          "SG",
+          "JP",
+          "AU",
+          "KR"
+        ],
+        "encryption_at_rest": true,
+        "encryption_in_transit": true,
+        "key_management": "local_compliance_required"
+      },
+      "encryption": {
+        "minimum_key_length": 256,
+        "approved_algorithms": [
+          "AES-256-GCM"
+        ],
+        "key_rotation_days": 365,
+        "perfect_forward_secrecy": false
+      },
+      "audit_retention_days": 1825,
+      "supported_languages": [
+        "en",
+        "es",
+        "fr",
+        "de",
+        "ja",
+        "zh_CN",
+        "ar"
+      ],
+      "timezone": "Asia/Singapore",
+      "regulatory_contacts": {
+        "data_protection_authority": "PDPC",
+        "contact_email": "privacy-apac@company.com",
+        "emergency_contact": "+65-800-555-0199"
+      }
+    }
+  },
+  "platform_configurations": {
+    "docker": {
+      "image_name": "healing-guard:latest",
+      "base_image": "alpine:3.18",
+      "config_path": "/app/config/",
+      "log_path": "/app/logs/",
+      "exposed_ports": [
+        8080,
+        8443
+      ],
+      "volumes": [
+        "/app/config",
+        "/app/logs",
+        "/app/data"
+      ],
+      "dockerfile": "Dockerfile"
+    },
+    "kubernetes": {
+      "helm_chart": "healing-guard",
+      "namespace": "healing-system",
+      "config_map": "healing-guard-config",
+      "secret": "healing-guard-secrets",
+      "service_account": "healing-guard-sa",
+      "rbac_required": true,
+      "manifests_path": "k8s/"
+    },
+    "aws": {
+      "deployment_method": "cloudformation",
+      "service_type": "ecs_fargate",
+      "load_balancer": "application_load_balancer",
+      "database": "rds_postgresql",
+      "cache": "elasticache_redis",
+      "monitoring": "cloudwatch",
+      "secrets": "secrets_manager",
+      "template_file": "aws-cloudformation.yaml"
+    },
+    "azure": {
+      "deployment_method": "arm_template",
+      "service_type": "container_instances",
+      "load_balancer": "application_gateway",
+      "database": "azure_database_postgresql",
+      "cache": "azure_cache_redis",
+      "monitoring": "application_insights",
+      "secrets": "key_vault",
+      "template_file": "azure-arm-template.json"
+    }
+  },
+  "compliance_configurations": {
+    "gdpr": {
+      "applicable_regions": [
+        "europe"
+      ],
+      "requirements_count": 3,
+      "mandatory_requirements": [
+        "gdpr_001",
+        "gdpr_002",
+        "gdpr_003"
+      ],
+      "validation_schedule": "monthly"
+    },
+    "ccpa": {
+      "applicable_regions": [
+        "north_america"
+      ],
+      "requirements_count": 2,
+      "mandatory_requirements": [
+        "ccpa_001",
+        "ccpa_002"
+      ],
+      "validation_schedule": "monthly"
+    },
+    "soc2": {
+      "applicable_regions": [
+        "north_america"
+      ],
+      "requirements_count": 2,
+      "mandatory_requirements": [
+        "soc2_001",
+        "soc2_002"
+      ],
+      "validation_schedule": "monthly"
+    },
+    "iso27001": {
+      "applicable_regions": [
+        "europe"
+      ],
+      "requirements_count": 1,
+      "mandatory_requirements": [
+        "iso27001_001"
+      ],
+      "validation_schedule": "monthly"
+    }
+  },
+  "localization_configurations": {
+    "en": {
+      "region": "north_america",
+      "rtl_support": false,
+      "date_format": "%Y-%m-%d",
+      "time_format": "%H:%M:%S UTC",
+      "number_format": "1,234.56",
+      "currency_symbol": "$",
+      "message_count": 10
+    },
+    "es": {
+      "region": "latin_america",
+      "rtl_support": false,
+      "date_format": "%d/%m/%Y",
+      "time_format": "%H:%M:%S UTC",
+      "number_format": "1.234,56",
+      "currency_symbol": "\u20ac",
+      "message_count": 10
+    },
+    "fr": {
+      "region": "europe",
+      "rtl_support": false,
+      "date_format": "%d/%m/%Y",
+      "time_format": "%H:%M:%S UTC",
+      "number_format": "1 234,56",
+      "currency_symbol": "\u20ac",
+      "message_count": 10
+    },
+    "de": {
+      "region": "europe",
+      "rtl_support": false,
+      "date_format": "%d.%m.%Y",
+      "time_format": "%H:%M:%S UTC",
+      "number_format": "1.234,56",
+      "currency_symbol": "\u20ac",
+      "message_count": 10
+    },
+    "ja": {
+      "region": "asia_pacific",
+      "rtl_support": false,
+      "date_format": "%Y\u5e74%m\u6708%d\u65e5",
+      "time_format": "%H:%M:%S UTC",
+      "number_format": "1,234.56",
+      "currency_symbol": "\u00a5",
+      "message_count": 10
+    },
+    "zh_CN": {
+      "region": "asia_pacific",
+      "rtl_support": false,
+      "date_format": "%Y\u5e74%m\u6708%d\u65e5",
+      "time_format": "%H:%M:%S UTC",
+      "number_format": "1,234.56",
+      "currency_symbol": "\u00a5",
+      "message_count": 10
+    },
+    "ar": {
+      "region": "middle_east_africa",
+      "rtl_support": true,
+      "date_format": "%d/%m/%Y",
+      "time_format": "%H:%M:%S UTC",
+      "number_format": "1,234.56",
+      "currency_symbol": "$",
+      "message_count": 10
+    }
+  }
+}

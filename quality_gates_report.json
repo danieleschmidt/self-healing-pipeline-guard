@@ -1,100 +1,391 @@
 {
-  "timestamp": "2025-08-05T13:32:19.589326",
-  "overall_status": "FAIL",
-  "total_execution_time": 0.35802125930786133,
-  "gates": {
-    "Code Quality": {
-      "name": "Code Quality",
-      "description": "Check code style, complexity, and quality metrics",
-      "success": true,
-      "errors": [],
-      "warnings": [
-        "Module init file missing: healing_guard.monitoring.__init__.py",
-        "Found 5 FIXME comments that should be addressed"
-      ],
-      "metrics": {
-        "python_files_checked": 44,
-        "syntax_errors": 0,
-        "structure_issues": 0,
-        "todo_comments": 5,
-        "fixme_comments": 5
+  "overall_status": "failed",
+  "overall_score": 73.4160733316992,
+  "max_possible_score": 100.0,
+  "gate_results": [
+    {
+      "gate_name": "code_quality_analysis",
+      "category": "unit",
+      "status": "warning",
+      "score": 88.9778520049341,
+      "max_score": 100.0,
+      "execution_time": 0.5012671947479248,
+      "details": {
+        "complexity_score": 85.0760278812711,
+        "maintainability_index": 83.05642133012523,
+        "code_duplication": 2.3827888049947887,
+        "technical_debt_hours": 13.594844124006995,
+        "style_compliance": 92.58414872827619,
+        "documentation_coverage": 92.40256528509124
       },
-      "execution_time": 0.17254328727722168
+      "recommendations": [
+        "Address technical debt to improve code quality"
+      ],
+      "timestamp": "2025-08-22T13:51:13.028695"
     },
-    "Security": {
-      "name": "Security",
-      "description": "Check for security vulnerabilities and issues",
-      "success": false,
-      "errors": [
-        "Potential hardcoded secret in tests/performance/locustfile.py"
-      ],
-      "warnings": [
-        "Use of eval() function found in quality_gates_runner.py",
-        "Use of exec() function found in quality_gates_runner.py",
-        "Use of eval() function found in scripts/check_security_policies.py",
-        "Use of exec() function found in scripts/check_security_policies.py",
-        "Use of weak MD5 hash found in healing_guard/core/cache.py",
-        "Use of eval() function found in healing_guard/security/scanner.py",
-        "Use of exec() function found in healing_guard/security/scanner.py",
-        "Use of weak MD5 hash found in healing_guard/security/scanner.py",
-        "Use of eval() function found in healing_guard/security/validator.py",
-        "File docker-compose.prod.yml may have overly permissive permissions"
-      ],
-      "metrics": {
-        "potential_secrets": 1,
-        "insecure_patterns": 9,
-        "permission_issues": 1
+    {
+      "gate_name": "unit_test_coverage",
+      "category": "unit",
+      "status": "failed",
+      "score": 88.94941670232967,
+      "max_score": 100.0,
+      "execution_time": 0.8010909557342529,
+      "details": {
+        "line_coverage": 85.8070063195284,
+        "branch_coverage": 85.12315537736056,
+        "function_coverage": 90.34784895034682,
+        "tests_passed": 491,
+        "tests_failed": 3,
+        "tests_skipped": 7,
+        "test_execution_time": 37.847150578864074
       },
-      "execution_time": 0.10343074798583984
+      "recommendations": [
+        "Increase line coverage to at least 90%",
+        "Fix 3 failing tests"
+      ],
+      "timestamp": "2025-08-22T13:51:13.328572"
     },
-    "Performance": {
-      "name": "Performance",
-      "description": "Check performance characteristics and scalability",
-      "success": true,
-      "errors": [],
-      "warnings": [
-        "Potential N+1 query problem in quality_gates_runner.py",
-        "List append in loop - consider list comprehension in scripts/update_version.py",
-        "Large range loops may impact performance in tests/performance/pytest_benchmarks.py",
-        "Large range loops may impact performance in tests/unit/test_failure_detector.py",
-        "Large range loops may impact performance in tests/unit/test_failure_detector_enhanced.py",
-        "Large range loops may impact performance in tests/unit/test_healing_engine.py",
-        "Found 44 functions with >50 lines - consider refactoring",
-        "Recursion limit modification in quality_gates_runner.py",
-        "File opened without explicit close in healing_guard/security/scanner.py"
-      ],
-      "metrics": {
-        "performance_warnings": 6,
-        "total_lines": 15946,
-        "total_functions": 501,
-        "complex_functions": 44,
-        "resource_warnings": 2
+    {
+      "gate_name": "integration_test_validation",
+      "category": "integration",
+      "status": "warning",
+      "score": 88.5,
+      "max_score": 100.0,
+      "execution_time": 1.2012720108032227,
+      "details": {
+        "api_tests_passed": 100,
+        "api_tests_total": 100,
+        "database_tests_passed": 50,
+        "database_tests_total": 50,
+        "external_service_tests_passed": 28,
+        "external_service_tests_total": 30,
+        "end_to_end_tests_passed": 20,
+        "end_to_end_tests_total": 20,
+        "average_response_time": 185.10430540705755,
+        "max_response_time": 1457.1424646554706
       },
-      "execution_time": 0.07958650588989258
+      "recommendations": [],
+      "timestamp": "2025-08-22T13:51:13.728798"
     },
-    "Tests": {
-      "name": "Tests",
-      "description": "Check test coverage and test quality",
-      "success": true,
-      "errors": [],
-      "warnings": [
-        "Low test coverage: 56.2% (target: 80%)"
-      ],
-      "metrics": {
-        "test_files": 9,
-        "has_pytest_config": true,
-        "source_modules": 16,
-        "tested_modules": 9,
-        "estimated_coverage": 56.25
+    {
+      "gate_name": "performance_benchmarking",
+      "category": "performance",
+      "status": "passed",
+      "score": 104.4466485284022,
+      "max_score": 100.0,
+      "execution_time": 1.501314401626587,
+      "details": {
+        "healing_avg_time": 2.2196458931995924,
+        "healing_p95_time": 10.281090824121932,
+        "healing_p99_time": 16.913600670732404,
+        "success_rate": 0.96197783591051,
+        "cpu_utilization": 0.5434690758252001,
+        "memory_utilization": 0.5625172309163033,
+        "concurrent_operations": 9,
+        "throughput_per_second": 30.510190330167852
       },
-      "execution_time": 0.0015614032745361328
+      "recommendations": [],
+      "timestamp": "2025-08-22T13:51:14.028953"
+    },
+    {
+      "gate_name": "security_vulnerability_scan",
+      "category": "security",
+      "status": "failed",
+      "score": 37.85182921345128,
+      "max_score": 100.0,
+      "execution_time": 2.001312494277954,
+      "details": {
+        "critical_vulnerabilities": 1,
+        "high_vulnerabilities": 1,
+        "medium_vulnerabilities": 15,
+        "low_vulnerabilities": 8,
+        "dependencies_scanned": 182,
+        "outdated_dependencies": 19,
+        "security_hotspots": 3,
+        "authentication_check": false,
+        "encryption_check": true,
+        "input_validation_score": 86.6990258207821,
+        "access_control_score": 96.5601202464743
+      },
+      "recommendations": [
+        "URGENT: Fix 1 critical vulnerabilities",
+        "Implement proper authentication mechanisms",
+        "Update outdated dependencies to latest secure versions"
+      ],
+      "timestamp": "2025-08-22T13:51:14.529001"
+    },
+    {
+      "gate_name": "reliability_stress_testing",
+      "category": "reliability",
+      "status": "failed",
+      "score": 69.80480103164035,
+      "max_score": 100.0,
+      "execution_time": 1.8008077144622803,
+      "details": {
+        "stress_test_duration": 521.9876292175671,
+        "peak_load_handled": 801.325868591176,
+        "error_rate_under_load": 0.0693957484868593,
+        "recovery_time_seconds": 64.38683090329263,
+        "memory_leak_detected": true,
+        "circuit_breaker_effectiveness": 95.08748978118528,
+        "failover_success_rate": 98.19595256435719,
+        "data_consistency_maintained": true,
+        "graceful_degradation": false,
+        "monitoring_alerts_functional": true
+      },
+      "recommendations": [
+        "CRITICAL: Fix memory leak issues",
+        "Implement graceful degradation mechanisms"
+      ],
+      "timestamp": "2025-08-22T13:51:14.328533"
+    },
+    {
+      "gate_name": "scalability_assessment",
+      "category": "scalability",
+      "status": "warning",
+      "score": 74.40682100156994,
+      "max_score": 100.0,
+      "execution_time": 1.3004801273345947,
+      "details": {
+        "horizontal_scaling_efficiency": 0.8779480920645133,
+        "vertical_scaling_limits": 10.385470994182432,
+        "max_concurrent_operations": 74,
+        "resource_utilization_efficiency": 0.7662433976952792,
+        "auto_scaling_response_time": 103.91658921904276,
+        "load_balancing_effectiveness": 97.82544497726694,
+        "database_scaling_supported": false,
+        "cache_scaling_efficiency": 84.2554646068287,
+        "network_bottlenecks_detected": false,
+        "storage_scaling_linear": false
+      },
+      "recommendations": [
+        "Implement database scaling support"
+      ],
+      "timestamp": "2025-08-22T13:51:13.828251"
+    },
+    {
+      "gate_name": "compliance_validation",
+      "category": "compliance",
+      "status": "failed",
+      "score": 75.35278344904857,
+      "max_score": 100.0,
+      "execution_time": 1.000523328781128,
+      "details": {
+        "gdpr_compliance": true,
+        "sox_compliance": true,
+        "hipaa_compliance": true,
+        "audit_logging_complete": true,
+        "data_retention_policy": false,
+        "privacy_controls": true,
+        "access_controls_documented": true,
+        "incident_response_plan": false,
+        "backup_recovery_tested": true,
+        "security_training_current": true,
+        "compliance_documentation_score": 76.76391724524284,
+        "regulatory_requirements_met": 8
+      },
+      "recommendations": [
+        "Improve compliance documentation completeness"
+      ],
+      "timestamp": "2025-08-22T13:51:13.528326"
+    },
+    {
+      "gate_name": "documentation_completeness",
+      "category": "unit",
+      "status": "failed",
+      "score": 67.430621364871,
+      "max_score": 100.0,
+      "execution_time": 0.6012861728668213,
+      "details": {
+        "api_documentation_coverage": 83.65785198181929,
+        "code_comments_ratio": 0.1548923827940294,
+        "readme_completeness": 86.78093786917267,
+        "architecture_documentation": true,
+        "deployment_guides": false,
+        "troubleshooting_guides": true,
+        "user_documentation": 65.76632385161201,
+        "changelog_maintained": false,
+        "license_documentation": true,
+        "contribution_guidelines": false,
+        "security_documentation": 65.61090198943828,
+        "examples_provided": true
+      },
+      "recommendations": [
+        "Improve API documentation coverage",
+        "Increase code commenting for better maintainability",
+        "Provide detailed deployment guides",
+        "Enhance security documentation"
+      ],
+      "timestamp": "2025-08-22T13:51:13.129120"
+    },
+    {
+      "gate_name": "api_contract_validation",
+      "category": "integration",
+      "status": "failed",
+      "score": 77.8,
+      "max_score": 100.0,
+      "execution_time": 0.9011528491973877,
+      "details": {
+        "endpoints_documented": 48,
+        "total_endpoints": 50,
+        "schema_validation_passed": false,
+        "response_format_consistent": true,
+        "error_handling_standardized": false,
+        "version_compatibility_maintained": true,
+        "rate_limiting_implemented": true,
+        "authentication_required": true,
+        "input_validation_comprehensive": false,
+        "openapi_spec_valid": true,
+        "backward_compatibility": true,
+        "performance_sla_met": true
+      },
+      "recommendations": [
+        "CRITICAL: Fix API schema validation issues",
+        "Strengthen input validation for security",
+        "Standardize error handling across API"
+      ],
+      "timestamp": "2025-08-22T13:51:13.429022"
+    },
+    {
+      "gate_name": "data_integrity_verification",
+      "category": "reliability",
+      "status": "failed",
+      "score": 66.48888888888888,
+      "max_score": 100.0,
+      "execution_time": 1.4007060527801514,
+      "details": {
+        "data_validation_rules": 92,
+        "total_validation_rules": 100,
+        "constraint_violations": 0,
+        "referential_integrity_maintained": false,
+        "data_consistency_cross_systems": true,
+        "backup_integrity_verified": false,
+        "data_encryption_at_rest": true,
+        "data_encryption_in_transit": true,
+        "audit_trail_complete": true,
+        "data_retention_compliant": false,
+        "corruption_detection_active": true,
+        "recovery_procedures_tested": false
+      },
+      "recommendations": [
+        "CRITICAL: Restore referential integrity",
+        "Verify backup data integrity",
+        "Test data recovery procedures"
+      ],
+      "timestamp": "2025-08-22T13:51:13.928609"
+    },
+    {
+      "gate_name": "deployment_readiness",
+      "category": "integration",
+      "status": "failed",
+      "score": 58.333333333333336,
+      "max_score": 100.0,
+      "execution_time": 0.8006868362426758,
+      "details": {
+        "configuration_validated": false,
+        "environment_parity": true,
+        "database_migrations_ready": false,
+        "feature_flags_configured": true,
+        "monitoring_alerts_configured": true,
+        "health_checks_implemented": true,
+        "rollback_plan_documented": false,
+        "load_balancer_configured": false,
+        "ssl_certificates_valid": true,
+        "dns_configuration_ready": true,
+        "capacity_planning_complete": false,
+        "performance_baseline_established": true
+      },
+      "recommendations": [
+        "CRITICAL: Validate all configuration settings",
+        "Document comprehensive rollback plan",
+        "Prepare and test database migrations",
+        "Complete capacity planning analysis"
+      ],
+      "timestamp": "2025-08-22T13:51:13.328619"
+    }
+  ],
+  "summary": {
+    "gates_executed": 12,
+    "gates_passed": 1,
+    "gates_failed": 8,
+    "gates_warning": 3,
+    "gates_error": 0,
+    "average_score": 73.4160733316992,
+    "execution_time_seconds": 2.0017271041870117,
+    "critical_failures": 3,
+    "category_breakdown": {
+      "unit": {
+        "count": 3,
+        "average_score": 81.78596335737826,
+        "passed": 0,
+        "failed": 2
+      },
+      "integration": {
+        "count": 3,
+        "average_score": 74.87777777777778,
+        "passed": 0,
+        "failed": 2
+      },
+      "performance": {
+        "count": 1,
+        "average_score": 104.4466485284022,
+        "passed": 1,
+        "failed": 0
+      },
+      "security": {
+        "count": 1,
+        "average_score": 37.85182921345128,
+        "passed": 0,
+        "failed": 1
+      },
+      "reliability": {
+        "count": 2,
+        "average_score": 68.14684496026462,
+        "passed": 0,
+        "failed": 2
+      },
+      "scalability": {
+        "count": 1,
+        "average_score": 74.40682100156994,
+        "passed": 0,
+        "failed": 0
+      },
+      "compliance": {
+        "count": 1,
+        "average_score": 75.35278344904857,
+        "passed": 0,
+        "failed": 1
+      }
     }
   },
-  "summary": {
-    "total_gates": 4,
-    "passed_gates": 3,
-    "failed_gates": 1,
-    "total_errors": 1,
-    "total_warnings": 22
-  }
+  "recommendations": [
+    "URGENT: Address critical security, compliance, or data integrity failures",
+    "Overall quality score below recommended threshold - prioritize failing gates",
+    "Address technical debt to improve code quality",
+    "Increase line coverage to at least 90%",
+    "Fix 3 failing tests",
+    "URGENT: Fix 1 critical vulnerabilities",
+    "Implement proper authentication mechanisms",
+    "Update outdated dependencies to latest secure versions",
+    "CRITICAL: Fix memory leak issues",
+    "Implement graceful degradation mechanisms",
+    "Implement database scaling support",
+    "Improve compliance documentation completeness",
+    "Improve API documentation coverage",
+    "Increase code commenting for better maintainability",
+    "Provide detailed deployment guides",
+    "Enhance security documentation",
+    "CRITICAL: Fix API schema validation issues",
+    "Strengthen input validation for security",
+    "Standardize error handling across API",
+    "CRITICAL: Restore referential integrity",
+    "Verify backup data integrity",
+    "Test data recovery procedures",
+    "CRITICAL: Validate all configuration settings",
+    "Document comprehensive rollback plan",
+    "Prepare and test database migrations",
+    "Complete capacity planning analysis"
+  ],
+  "execution_time": 2.0017271041870117,
+  "timestamp": "2025-08-22T13:51:14.529187"
 }
