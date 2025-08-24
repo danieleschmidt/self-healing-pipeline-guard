@@ -1,8 +1,8 @@
 {
   "total_failures": 5,
-  "successful_healings": 3,
-  "success_rate": 0.6,
-  "total_duration": 1.382030725479126,
+  "successful_healings": 4,
+  "success_rate": 0.8,
+  "total_duration": 1.3815011978149414,
   "strategy_effectiveness": {
     "retry": {
       "total": 2,
@@ -10,7 +10,7 @@
     },
     "check": {
       "total": 1,
-      "successful": 0
+      "successful": 1
     },
     "increase": {
       "total": 1,
@@ -22,7 +22,7 @@
     },
     "clear": {
       "total": 1,
-      "successful": 1
+      "successful": 0
     },
     "update": {
       "total": 1,

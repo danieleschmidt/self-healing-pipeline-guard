@@ -1,6 +1,6 @@
 {
-  "audit_id": "8c5ddc3f-1ae4-4a38-b544-aa6f4b7a202f",
-  "start_time": "2025-08-22T13:54:14.480563+00:00",
+  "audit_id": "5ed43a60-694b-44e0-be0b-d51a0019413c",
+  "start_time": "2025-08-24T20:49:15.682574+00:00",
   "regions_audited": [
     "north_america",
     "europe",
@@ -31,8 +31,8 @@
       ],
       "overall_status": "non_compliant",
       "requirements_checked": 4,
-      "requirements_passed": 2,
-      "requirements_failed": 2,
+      "requirements_passed": 3,
+      "requirements_failed": 1,
       "critical_failures": [
         {
           "requirement_id": "soc2_001",
@@ -47,16 +47,12 @@
         }
       ],
       "recommendations": [
-        "Establish security operations center",
-        "Monitor response times",
-        "Conduct regular incident drills",
-        "Deploy SIEM solution",
-        "Create escalation procedures",
         "Create incident response playbooks",
-        "Implement request tracking system",
-        "Automate response acknowledgments"
+        "Deploy SIEM solution",
+        "Conduct regular incident drills",
+        "Establish security operations center"
       ],
-      "validation_timestamp": "2025-08-22T13:54:14.480658+00:00"
+      "validation_timestamp": "2025-08-24T20:49:15.682711+00:00"
     },
     "europe": {
       "region": "europe",
@@ -68,18 +64,30 @@
         "hipaa",
         "pci_dss"
       ],
-      "overall_status": "compliant",
+      "overall_status": "non_compliant",
       "requirements_checked": 8,
       "requirements_passed": 7,
       "requirements_failed": 1,
-      "critical_failures": [],
-      "recommendations": [
-        "Deploy privileged access management",
-        "Establish access review procedures",
-        "Regular access certification",
-        "Implement role-based access control"
+      "critical_failures": [
+        {
+          "requirement_id": "iso27001_001",
+          "title": "Information Security Management System",
+          "framework": "iso27001",
+          "remediation_steps": [
+            "Develop information security policy",
+            "Conduct risk assessments",
+            "Implement security controls",
+            "Regular management reviews"
+          ]
+        }
       ],
-      "validation_timestamp": "2025-08-22T13:54:15.083507+00:00"
+      "recommendations": [
+        "Implement security controls",
+        "Develop information security policy",
+        "Regular management reviews",
+        "Conduct risk assessments"
+      ],
+      "validation_timestamp": "2025-08-24T20:49:16.303017+00:00"
     },
     "asia_pacific": {
       "region": "asia_pacific",
@@ -109,16 +117,16 @@
         }
       ],
       "recommendations": [
-        "Establish security operations center",
-        "Monitor response times",
         "Conduct regular incident drills",
+        "Monitor response times",
         "Deploy SIEM solution",
         "Create escalation procedures",
-        "Create incident response playbooks",
+        "Establish security operations center",
         "Implement request tracking system",
+        "Create incident response playbooks",
         "Automate response acknowledgments"
       ],
-      "validation_timestamp": "2025-08-22T13:54:16.289164+00:00"
+      "validation_timestamp": "2025-08-24T20:49:17.509889+00:00"
     },
     "latin_america": {
       "region": "latin_america",
@@ -136,45 +144,10 @@
       "requirements_failed": 0,
       "critical_failures": [],
       "recommendations": [],
-      "validation_timestamp": "2025-08-22T13:54:16.892015+00:00"
+      "validation_timestamp": "2025-08-24T20:49:18.113447+00:00"
     },
     "middle_east_africa": {
       "region": "middle_east_africa",
-      "frameworks_checked": [
-        "gdpr",
-        "ccpa",
-        "soc2",
-        "iso27001",
-        "hipaa",
-        "pci_dss"
-      ],
-      "overall_status": "non_compliant",
-      "requirements_checked": 4,
-      "requirements_passed": 3,
-      "requirements_failed": 1,
-      "critical_failures": [
-        {
-          "requirement_id": "soc2_001",
-          "title": "Security Monitoring and Incident Response",
-          "framework": "soc2",
-          "remediation_steps": [
-            "Deploy SIEM solution",
-            "Create incident response playbooks",
-            "Establish security operations center",
-            "Conduct regular incident drills"
-          ]
-        }
-      ],
-      "recommendations": [
-        "Establish security operations center",
-        "Conduct regular incident drills",
-        "Deploy SIEM solution",
-        "Create incident response playbooks"
-      ],
-      "validation_timestamp": "2025-08-22T13:54:17.495109+00:00"
-    },
-    "australia_nz": {
-      "region": "australia_nz",
       "frameworks_checked": [
         "gdpr",
         "ccpa",
@@ -189,44 +162,67 @@
       "requirements_failed": 0,
       "critical_failures": [],
       "recommendations": [],
-      "validation_timestamp": "2025-08-22T13:54:18.107100+00:00"
+      "validation_timestamp": "2025-08-24T20:49:18.716970+00:00"
+    },
+    "australia_nz": {
+      "region": "australia_nz",
+      "frameworks_checked": [
+        "gdpr",
+        "ccpa",
+        "soc2",
+        "iso27001",
+        "hipaa",
+        "pci_dss"
+      ],
+      "overall_status": "compliant",
+      "requirements_checked": 4,
+      "requirements_passed": 3,
+      "requirements_failed": 1,
+      "critical_failures": [],
+      "recommendations": [
+        "Implement request tracking system",
+        "Monitor response times",
+        "Automate response acknowledgments",
+        "Create escalation procedures"
+      ],
+      "validation_timestamp": "2025-08-24T20:49:19.320584+00:00"
     }
   },
   "framework_summary": {
     "gdpr": {
       "total_requirements": 28,
-      "passed_requirements": 22,
-      "compliance_rate": 0.7857142857142857,
+      "passed_requirements": 23,
+      "compliance_rate": 0.8214285714285714,
       "status": "non_compliant"
     },
     "ccpa": {
       "total_requirements": 28,
-      "passed_requirements": 22,
-      "compliance_rate": 0.7857142857142857,
+      "passed_requirements": 23,
+      "compliance_rate": 0.8214285714285714,
       "status": "non_compliant"
     },
     "soc2": {
       "total_requirements": 28,
-      "passed_requirements": 22,
-      "compliance_rate": 0.7857142857142857,
+      "passed_requirements": 23,
+      "compliance_rate": 0.8214285714285714,
       "status": "non_compliant"
     },
     "iso27001": {
       "total_requirements": 28,
-      "passed_requirements": 22,
-      "compliance_rate": 0.7857142857142857,
+      "passed_requirements": 23,
+      "compliance_rate": 0.8214285714285714,
       "status": "non_compliant"
     },
     "hipaa": {
       "total_requirements": 28,
-      "passed_requirements": 22,
-      "compliance_rate": 0.7857142857142857,
+      "passed_requirements": 23,
+      "compliance_rate": 0.8214285714285714,
       "status": "non_compliant"
     },
     "pci_dss": {
       "total_requirements": 28,
-      "passed_requirements": 22,
-      "compliance_rate": 0.7857142857142857,
+      "passed_requirements": 23,
+      "compliance_rate": 0.8214285714285714,
       "status": "non_compliant"
     }
   },
@@ -243,14 +239,14 @@
       ]
     },
     {
-      "requirement_id": "soc2_001",
-      "title": "Security Monitoring and Incident Response",
-      "framework": "soc2",
+      "requirement_id": "iso27001_001",
+      "title": "Information Security Management System",
+      "framework": "iso27001",
       "remediation_steps": [
-        "Deploy SIEM solution",
-        "Create incident response playbooks",
-        "Establish security operations center",
-        "Conduct regular incident drills"
+        "Develop information security policy",
+        "Conduct risk assessments",
+        "Implement security controls",
+        "Regular management reviews"
       ]
     },
     {
@@ -266,20 +262,20 @@
     }
   ],
   "recommendations": [
-    "Establish security operations center",
-    "Monitor response times",
     "Conduct regular incident drills",
-    "Regular access certification",
+    "Automate response acknowledgments",
+    "Monitor response times",
     "Deploy SIEM solution",
     "Create escalation procedures",
-    "Create incident response playbooks",
-    "Deploy privileged access management",
+    "Conduct risk assessments",
+    "Regular management reviews",
+    "Establish security operations center",
     "Implement request tracking system",
-    "Implement role-based access control",
-    "Establish access review procedures",
-    "Automate response acknowledgments"
+    "Implement security controls",
+    "Create incident response playbooks",
+    "Develop information security policy"
   ],
-  "next_audit_date": "2025-11-20T13:54:14.480570+00:00",
-  "end_time": "2025-08-22T13:54:18.710326+00:00",
-  "duration_seconds": 4.22979736328125
+  "next_audit_date": "2025-11-22T20:49:15.682588+00:00",
+  "end_time": "2025-08-24T20:49:19.925102+00:00",
+  "duration_seconds": 4.242620468139648
 }
