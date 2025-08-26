@@ -1,16 +1,16 @@
 {
   "total_failures": 5,
-  "successful_healings": 5,
-  "partial_healings": 0,
-  "success_rate": 1.0,
+  "successful_healings": 4,
+  "partial_healings": 1,
+  "success_rate": 0.8,
   "healing_results": 5,
   "resilience_metrics": {
     "cpu_usage": 0.0,
     "memory_usage": 0.0,
     "error_rate": 0.0,
     "success_rate": 1.0,
-    "avg_response_time": 5.096079022390768,
+    "avg_response_time": 0.6839240957051516,
     "active_connections": 0,
-    "timestamp": "2025-08-24 20:49:09.649971"
+    "timestamp": "2025-08-26 05:03:04.016473"
   }
 }

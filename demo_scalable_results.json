@@ -3,14 +3,14 @@
   "successful_healings": 6,
   "partial_healings": 0,
   "success_rate": 1.0,
-  "total_processing_time": 4.007169008255005,
-  "concurrency_speedup": 5.998662008765842,
+  "total_processing_time": 5.1950249671936035,
+  "concurrency_speedup": 4.859404987187874,
   "system_insights": {
     "system_health": {
       "status": "good",
       "total_healings": 6,
       "success_rate": 1.0,
-      "avg_healing_time": 4.006275415420532,
+      "avg_healing_time": 4.207455039024353,
       "peak_concurrent": 6
     },
     "performance_optimization": {
@@ -53,7 +53,7 @@
     "total_healings": 6,
     "successful_healings": 6,
     "failed_healings": 0,
-    "avg_healing_time": 4.006275415420532,
+    "avg_healing_time": 4.207455039024353,
     "peak_concurrent_healings": 6,
     "cache_hit_rate": 0.0,
     "throughput": 0.0,

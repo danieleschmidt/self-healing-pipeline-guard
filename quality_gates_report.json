@@ -1,356 +1,355 @@
 {
   "overall_status": "failed",
-  "overall_score": 72.81268220263708,
+  "overall_score": 79.04629408830168,
   "max_possible_score": 100.0,
   "gate_results": [
     {
       "gate_name": "code_quality_analysis",
       "category": "unit",
       "status": "passed",
-      "score": 90.24312070966168,
+      "score": 90.94328563829735,
       "max_score": 100.0,
-      "execution_time": 0.5012266635894775,
+      "execution_time": 0.501945972442627,
       "details": {
-        "complexity_score": 89.76684871945233,
-        "maintainability_index": 83.71802978082953,
-        "code_duplication": 5.4709309260370915,
-        "technical_debt_hours": 10.864424835712528,
-        "style_compliance": 95.08679600602524,
-        "documentation_coverage": 91.55619315309309
+        "complexity_score": 95.50589187808609,
+        "maintainability_index": 86.35096392513296,
+        "code_duplication": 5.051654775490766,
+        "technical_debt_hours": 1.7696499772387169,
+        "style_compliance": 92.44143084401286,
+        "documentation_coverage": 78.19263709307357
       },
       "recommendations": [
         "Reduce code duplication to improve maintainability",
-        "Address technical debt to improve code quality"
+        "Increase documentation coverage"
       ],
-      "timestamp": "2025-08-24T20:49:06.797402"
+      "timestamp": "2025-08-26T05:03:59.805008"
     },
     {
       "gate_name": "unit_test_coverage",
       "category": "unit",
-      "status": "warning",
-      "score": 92.57843319181382,
+      "status": "failed",
+      "score": 94.068146324609,
       "max_score": 100.0,
-      "execution_time": 0.8010492324829102,
+      "execution_time": 0.801196813583374,
       "details": {
-        "line_coverage": 85.54857449197858,
-        "branch_coverage": 89.79503697033701,
-        "function_coverage": 99.87674876559572,
-        "tests_passed": 462,
-        "tests_failed": 0,
-        "tests_skipped": 0,
-        "test_execution_time": 43.613513467617025
+        "line_coverage": 93.51298691371778,
+        "branch_coverage": 89.61676038021122,
+        "function_coverage": 98.11524648462064,
+        "tests_passed": 474,
+        "tests_failed": 5,
+        "tests_skipped": 7,
+        "test_execution_time": 37.20620978394019
       },
       "recommendations": [
-        "Increase line coverage to at least 90%"
+        "Fix 5 failing tests"
       ],
-      "timestamp": "2025-08-24T20:49:07.097282"
+      "timestamp": "2025-08-26T05:04:00.104351"
     },
     {
       "gate_name": "integration_test_validation",
       "category": "integration",
-      "status": "failed",
-      "score": 83.6475,
+      "status": "passed",
+      "score": 97.4,
       "max_score": 100.0,
-      "execution_time": 1.2013771533966064,
+      "execution_time": 1.200993299484253,
       "details": {
-        "api_tests_passed": 100,
+        "api_tests_passed": 98,
         "api_tests_total": 100,
-        "database_tests_passed": 49,
+        "database_tests_passed": 48,
         "database_tests_total": 50,
-        "external_service_tests_passed": 28,
+        "external_service_tests_passed": 30,
         "external_service_tests_total": 30,
-        "end_to_end_tests_passed": 20,
+        "end_to_end_tests_passed": 19,
         "end_to_end_tests_total": 20,
-        "average_response_time": 284.6166824943572,
-        "max_response_time": 1282.475359329735
+        "average_response_time": 199.19170298422554,
+        "max_response_time": 1197.5241120213427
       },
-      "recommendations": [
-        "Optimize response times for better performance"
-      ],
-      "timestamp": "2025-08-24T20:49:07.497656"
+      "recommendations": [],
+      "timestamp": "2025-08-26T05:04:00.504219"
     },
     {
       "gate_name": "performance_benchmarking",
       "category": "performance",
-      "status": "warning",
-      "score": 96.40959330399643,
+      "status": "passed",
+      "score": 102.04233583064752,
       "max_score": 100.0,
-      "execution_time": 1.5004029273986816,
+      "execution_time": 1.5005958080291748,
       "details": {
-        "healing_avg_time": 3.4275317413183526,
-        "healing_p95_time": 10.020134868637111,
-        "healing_p99_time": 24.250100365935676,
-        "success_rate": 0.924917469135725,
-        "cpu_utilization": 0.2741601420181793,
-        "memory_utilization": 0.40084601147364096,
-        "concurrent_operations": 8,
-        "throughput_per_second": 17.82454331466323
+        "healing_avg_time": 4.29651487843532,
+        "healing_p95_time": 8.721369048209073,
+        "healing_p99_time": 18.05684438320352,
+        "success_rate": 0.9594521521458611,
+        "cpu_utilization": 0.3832268188834676,
+        "memory_utilization": 0.4111881102609974,
+        "concurrent_operations": 13,
+        "throughput_per_second": 31.82077532170382
       },
       "recommendations": [],
-      "timestamp": "2025-08-24T20:49:07.796717"
+      "timestamp": "2025-08-26T05:04:00.803980"
     },
     {
       "gate_name": "security_vulnerability_scan",
       "category": "security",
       "status": "failed",
-      "score": 58.412976950700155,
+      "score": 43.02451581769984,
       "max_score": 100.0,
-      "execution_time": 2.0013740062713623,
+      "execution_time": 2.000734329223633,
       "details": {
-        "critical_vulnerabilities": 0,
-        "high_vulnerabilities": 4,
-        "medium_vulnerabilities": 9,
-        "low_vulnerabilities": 11,
-        "dependencies_scanned": 233,
-        "outdated_dependencies": 22,
-        "security_hotspots": 8,
-        "authentication_check": true,
+        "critical_vulnerabilities": 1,
+        "high_vulnerabilities": 1,
+        "medium_vulnerabilities": 13,
+        "low_vulnerabilities": 7,
+        "dependencies_scanned": 154,
+        "outdated_dependencies": 5,
+        "security_hotspots": 3,
+        "authentication_check": false,
         "encryption_check": true,
-        "input_validation_score": 98.39434389321111,
-        "access_control_score": 97.6705408602896
+        "input_validation_score": 93.58544917890535,
+        "access_control_score": 94.53712990959387
       },
       "recommendations": [
-        "Address 4 high-risk vulnerabilities",
-        "Update outdated dependencies to latest secure versions"
+        "URGENT: Fix 1 critical vulnerabilities",
+        "Implement proper authentication mechanisms"
       ],
-      "timestamp": "2025-08-24T20:49:08.297734"
+      "timestamp": "2025-08-26T05:04:01.304206"
     },
     {
       "gate_name": "reliability_stress_testing",
       "category": "reliability",
-      "status": "failed",
-      "score": 30.346309355799534,
+      "status": "warning",
+      "score": 89.2531820438254,
       "max_score": 100.0,
-      "execution_time": 1.8008272647857666,
+      "execution_time": 1.8010973930358887,
       "details": {
-        "stress_test_duration": 512.3329515453522,
-        "peak_load_handled": 1199.5096347086715,
-        "error_rate_under_load": 0.1286643933983436,
-        "recovery_time_seconds": 89.7360398817725,
+        "stress_test_duration": 434.9409326062445,
+        "peak_load_handled": 790.657378340368,
+        "error_rate_under_load": 0.09168535246581415,
+        "recovery_time_seconds": 101.36582487670591,
         "memory_leak_detected": false,
-        "circuit_breaker_effectiveness": 85.28296304700103,
-        "failover_success_rate": 99.6802158581293,
-        "data_consistency_maintained": false,
-        "graceful_degradation": false,
-        "monitoring_alerts_functional": false
+        "circuit_breaker_effectiveness": 90.47149478304786,
+        "failover_success_rate": 95.27523956788617,
+        "data_consistency_maintained": true,
+        "graceful_degradation": true,
+        "monitoring_alerts_functional": true
       },
       "recommendations": [
-        "Reduce error rate under load",
-        "Ensure data consistency during failures",
-        "Implement graceful degradation mechanisms"
+        "Improve system recovery time"
       ],
-      "timestamp": "2025-08-24T20:49:08.097220"
+      "timestamp": "2025-08-26T05:04:01.104627"
     },
     {
       "gate_name": "scalability_assessment",
       "category": "scalability",
-      "status": "warning",
-      "score": 79.33439799672573,
+      "status": "passed",
+      "score": 88.69577664730863,
       "max_score": 100.0,
-      "execution_time": 1.3005800247192383,
+      "execution_time": 1.3012354373931885,
       "details": {
-        "horizontal_scaling_efficiency": 0.7715816810740149,
-        "vertical_scaling_limits": 7.10472863442955,
-        "max_concurrent_operations": 99,
-        "resource_utilization_efficiency": 0.8117199373396692,
-        "auto_scaling_response_time": 70.4452899446303,
-        "load_balancing_effectiveness": 89.92334930040488,
-        "database_scaling_supported": false,
-        "cache_scaling_efficiency": 91.83241911242136,
+        "horizontal_scaling_efficiency": 0.8859805656447625,
+        "vertical_scaling_limits": 7.6869069506146115,
+        "max_concurrent_operations": 113,
+        "resource_utilization_efficiency": 0.6747546424783595,
+        "auto_scaling_response_time": 128.25581858227955,
+        "load_balancing_effectiveness": 89.04085677112191,
+        "database_scaling_supported": true,
+        "cache_scaling_efficiency": 92.60311499591019,
         "network_bottlenecks_detected": false,
         "storage_scaling_linear": true
       },
       "recommendations": [
-        "Implement database scaling support"
+        "Optimize auto-scaling response time",
+        "Optimize resource utilization"
       ],
-      "timestamp": "2025-08-24T20:49:07.597003"
+      "timestamp": "2025-08-26T05:04:00.604851"
     },
     {
       "gate_name": "compliance_validation",
       "category": "compliance",
       "status": "failed",
-      "score": 68.73446609239143,
+      "score": 72.82639853876742,
       "max_score": 100.0,
-      "execution_time": 1.0006422996520996,
+      "execution_time": 1.0008914470672607,
       "details": {
         "gdpr_compliance": true,
-        "sox_compliance": true,
-        "hipaa_compliance": true,
-        "audit_logging_complete": false,
-        "data_retention_policy": false,
+        "sox_compliance": false,
+        "hipaa_compliance": false,
+        "audit_logging_complete": true,
+        "data_retention_policy": true,
         "privacy_controls": false,
-        "access_controls_documented": false,
-        "incident_response_plan": false,
-        "backup_recovery_tested": true,
+        "access_controls_documented": true,
+        "incident_response_plan": true,
+        "backup_recovery_tested": false,
         "security_training_current": true,
-        "compliance_documentation_score": 93.67233046195712,
-        "regulatory_requirements_met": 10
+        "compliance_documentation_score": 76.63199269383706,
+        "regulatory_requirements_met": 11
       },
       "recommendations": [
-        "Implement comprehensive audit logging",
-        "Strengthen privacy controls and data protection"
+        "Strengthen privacy controls and data protection",
+        "Address SOX compliance requirements",
+        "Test backup and recovery procedures",
+        "Improve compliance documentation completeness"
       ],
-      "timestamp": "2025-08-24T20:49:07.297095"
+      "timestamp": "2025-08-26T05:04:00.304574"
     },
     {
       "gate_name": "documentation_completeness",
       "category": "unit",
       "status": "warning",
-      "score": 73.945371278356,
+      "score": 76.77674792823791,
       "max_score": 100.0,
-      "execution_time": 0.6013262271881104,
+      "execution_time": 0.6008715629577637,
       "details": {
-        "api_documentation_coverage": 89.30914022242467,
-        "code_comments_ratio": 0.20975552817839846,
-        "readme_completeness": 85.68488387787247,
+        "api_documentation_coverage": 93.03789256569097,
+        "code_comments_ratio": 0.23723577676569313,
+        "readme_completeness": 76.52393910909436,
         "architecture_documentation": true,
-        "deployment_guides": false,
-        "troubleshooting_guides": false,
-        "user_documentation": 84.17242511044373,
+        "deployment_guides": true,
+        "troubleshooting_guides": true,
+        "user_documentation": 73.74525117269424,
         "changelog_maintained": true,
         "license_documentation": false,
-        "contribution_guidelines": true,
-        "security_documentation": 68.80233831881428,
+        "contribution_guidelines": false,
+        "security_documentation": 70.96038061232377,
         "examples_provided": true
       },
       "recommendations": [
-        "Improve API documentation coverage",
-        "Provide detailed deployment guides",
         "Enhance security documentation"
       ],
-      "timestamp": "2025-08-24T20:49:06.897808"
+      "timestamp": "2025-08-26T05:03:59.904641"
     },
     {
       "gate_name": "api_contract_validation",
       "category": "integration",
-      "status": "warning",
-      "score": 86.0,
+      "status": "failed",
+      "score": 69.0,
       "max_score": 100.0,
-      "execution_time": 0.9012014865875244,
+      "execution_time": 0.901127815246582,
       "details": {
-        "endpoints_documented": 50,
+        "endpoints_documented": 45,
         "total_endpoints": 50,
-        "schema_validation_passed": true,
+        "schema_validation_passed": false,
         "response_format_consistent": true,
-        "error_handling_standardized": false,
+        "error_handling_standardized": true,
         "version_compatibility_maintained": true,
         "rate_limiting_implemented": true,
-        "authentication_required": true,
-        "input_validation_comprehensive": true,
-        "openapi_spec_valid": false,
+        "authentication_required": false,
+        "input_validation_comprehensive": false,
+        "openapi_spec_valid": true,
         "backward_compatibility": true,
-        "performance_sla_met": true
+        "performance_sla_met": false
       },
       "recommendations": [
-        "Standardize error handling across API"
+        "CRITICAL: Fix API schema validation issues",
+        "Implement authentication for API endpoints",
+        "Strengthen input validation for security"
       ],
-      "timestamp": "2025-08-24T20:49:07.197750"
+      "timestamp": "2025-08-26T05:04:00.204969"
     },
     {
       "gate_name": "data_integrity_verification",
       "category": "reliability",
-      "status": "failed",
-      "score": 69.94444444444446,
+      "status": "warning",
+      "score": 77.94444444444446,
       "max_score": 100.0,
-      "execution_time": 1.4007811546325684,
+      "execution_time": 1.4015581607818604,
       "details": {
-        "data_validation_rules": 85,
+        "data_validation_rules": 95,
         "total_validation_rules": 100,
-        "constraint_violations": 2,
+        "constraint_violations": 1,
         "referential_integrity_maintained": true,
         "data_consistency_cross_systems": true,
-        "backup_integrity_verified": true,
+        "backup_integrity_verified": false,
         "data_encryption_at_rest": true,
         "data_encryption_in_transit": true,
-        "audit_trail_complete": true,
+        "audit_trail_complete": false,
         "data_retention_compliant": true,
-        "corruption_detection_active": false,
-        "recovery_procedures_tested": false
+        "corruption_detection_active": true,
+        "recovery_procedures_tested": true
       },
       "recommendations": [
-        "Fix 2 data constraint violations",
-        "Test data recovery procedures"
+        "Fix 1 data constraint violations",
+        "Verify backup data integrity",
+        "Complete audit trail implementation"
       ],
-      "timestamp": "2025-08-24T20:49:07.697376"
+      "timestamp": "2025-08-26T05:04:00.705454"
     },
     {
       "gate_name": "deployment_readiness",
       "category": "integration",
       "status": "failed",
-      "score": 58.333333333333336,
+      "score": 66.66666666666666,
       "max_score": 100.0,
-      "execution_time": 0.8007059097290039,
+      "execution_time": 0.8004724979400635,
       "details": {
-        "configuration_validated": false,
+        "configuration_validated": true,
         "environment_parity": true,
         "database_migrations_ready": true,
-        "feature_flags_configured": true,
-        "monitoring_alerts_configured": true,
-        "health_checks_implemented": false,
+        "feature_flags_configured": false,
+        "monitoring_alerts_configured": false,
+        "health_checks_implemented": true,
         "rollback_plan_documented": true,
-        "load_balancer_configured": true,
-        "ssl_certificates_valid": false,
-        "dns_configuration_ready": false,
-        "capacity_planning_complete": true,
-        "performance_baseline_established": false
+        "load_balancer_configured": false,
+        "ssl_certificates_valid": true,
+        "dns_configuration_ready": true,
+        "capacity_planning_complete": false,
+        "performance_baseline_established": true
       },
       "recommendations": [
-        "CRITICAL: Validate all configuration settings",
-        "Implement health check endpoints",
-        "Ensure SSL certificates are valid and current"
+        "Configure production monitoring alerts",
+        "Complete capacity planning analysis"
       ],
-      "timestamp": "2025-08-24T20:49:07.097333"
+      "timestamp": "2025-08-26T05:04:00.104441"
     }
   ],
   "summary": {
     "gates_executed": 12,
-    "gates_passed": 1,
-    "gates_failed": 6,
-    "gates_warning": 5,
+    "gates_passed": 4,
+    "gates_failed": 5,
+    "gates_warning": 3,
     "gates_error": 0,
-    "average_score": 72.81268220263708,
-    "execution_time_seconds": 2.0017168521881104,
-    "critical_failures": 3,
+    "average_score": 79.04629408830168,
+    "execution_time_seconds": 2.001478910446167,
+    "critical_failures": 2,
     "category_breakdown": {
       "unit": {
         "count": 3,
-        "average_score": 85.58897505994383,
+        "average_score": 87.26272663038144,
         "passed": 1,
-        "failed": 0
+        "failed": 1
       },
       "integration": {
         "count": 3,
-        "average_score": 75.99361111111111,
-        "passed": 0,
+        "average_score": 77.68888888888888,
+        "passed": 1,
         "failed": 2
       },
       "performance": {
         "count": 1,
-        "average_score": 96.40959330399643,
-        "passed": 0,
+        "average_score": 102.04233583064752,
+        "passed": 1,
         "failed": 0
       },
       "security": {
         "count": 1,
-        "average_score": 58.412976950700155,
+        "average_score": 43.02451581769984,
         "passed": 0,
         "failed": 1
       },
       "reliability": {
         "count": 2,
-        "average_score": 50.145376900121995,
+        "average_score": 83.59881324413493,
         "passed": 0,
-        "failed": 2
+        "failed": 0
       },
       "scalability": {
         "count": 1,
-        "average_score": 79.33439799672573,
-        "passed": 0,
+        "average_score": 88.69577664730863,
+        "passed": 1,
         "failed": 0
       },
       "compliance": {
         "count": 1,
-        "average_score": 68.73446609239143,
+        "average_score": 72.82639853876742,
         "passed": 0,
         "failed": 1
       }
@@ -360,27 +359,27 @@
     "URGENT: Address critical security, compliance, or data integrity failures",
     "Overall quality score below recommended threshold - prioritize failing gates",
     "Reduce code duplication to improve maintainability",
-    "Address technical debt to improve code quality",
-    "Increase line coverage to at least 90%",
-    "Optimize response times for better performance",
-    "Address 4 high-risk vulnerabilities",
-    "Update outdated dependencies to latest secure versions",
-    "Reduce error rate under load",
-    "Ensure data consistency during failures",
-    "Implement graceful degradation mechanisms",
-    "Implement database scaling support",
-    "Implement comprehensive audit logging",
+    "Increase documentation coverage",
+    "Fix 5 failing tests",
+    "URGENT: Fix 1 critical vulnerabilities",
+    "Implement proper authentication mechanisms",
+    "Improve system recovery time",
+    "Optimize auto-scaling response time",
+    "Optimize resource utilization",
     "Strengthen privacy controls and data protection",
-    "Improve API documentation coverage",
-    "Provide detailed deployment guides",
+    "Address SOX compliance requirements",
+    "Test backup and recovery procedures",
+    "Improve compliance documentation completeness",
     "Enhance security documentation",
-    "Standardize error handling across API",
-    "Fix 2 data constraint violations",
-    "Test data recovery procedures",
-    "CRITICAL: Validate all configuration settings",
-    "Implement health check endpoints",
-    "Ensure SSL certificates are valid and current"
+    "CRITICAL: Fix API schema validation issues",
+    "Implement authentication for API endpoints",
+    "Strengthen input validation for security",
+    "Fix 1 data constraint violations",
+    "Verify backup data integrity",
+    "Complete audit trail implementation",
+    "Configure production monitoring alerts",
+    "Complete capacity planning analysis"
   ],
-  "execution_time": 2.0017168521881104,
-  "timestamp": "2025-08-24T20:49:08.297887"
+  "execution_time": 2.001478910446167,
+  "timestamp": "2025-08-26T05:04:01.304536"
 }
