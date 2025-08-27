@@ -3,6 +3,14 @@
 from .gdpr import GDPRCompliance, DataProcessor
 from .audit import ComplianceAuditor, AuditTrail
 from .data_governance import DataGovernanceManager, DataClassification
+from .advanced_audit import (
+    ComplianceAuditor as AdvancedAuditor,
+    ComplianceEvent,
+    ComplianceReport,
+    ComplianceStandard,
+    RetentionPolicy,
+    compliance_auditor
+)
 
 __all__ = [
     "GDPRCompliance",
@@ -10,5 +18,11 @@ __all__ = [
     "ComplianceAuditor", 
     "AuditTrail",
     "DataGovernanceManager",
-    "DataClassification"
+    "DataClassification",
+    "AdvancedAuditor",
+    "ComplianceEvent",
+    "ComplianceReport", 
+    "ComplianceStandard",
+    "RetentionPolicy",
+    "compliance_auditor"
 ]
