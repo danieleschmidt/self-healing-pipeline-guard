@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: healing-guard
+  labels:
+    name: healing-guard
+    environment: production
+    app.kubernetes.io/name: healing-guard
+    app.kubernetes.io/part-of: ci-cd-platform
