@@ -1,459 +1,186 @@
 # self-healing-pipeline-guard
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/your-org/self-healing-pipeline-guard/ci.yml?branch=main)](https://github.com/your-org/self-healing-pipeline-guard/actions)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-v1.0-green)](https://github.com/marketplace/actions/self-healing-pipeline-guard)
-[![Coverage](https://codecov.io/gh/your-org/self-healing-pipeline-guard/branch/main/graph/badge.svg)](https://codecov.io/gh/your-org/self-healing-pipeline-guard)
+A lightweight CI/CD failure detector and auto-remediation engine — **stdlib only, zero dependencies**.
 
-AI-powered CI/CD guardian that automatically detects, diagnoses, and fixes pipeline failures. Reduces mean-time-to-green by up to 65% through intelligent remediation strategies.
+## What it does
 
-## 🎯 Key Features
+When your pipeline breaks, this tool:
 
-- **Intelligent Failure Detection**: ML-based classification of failure types
-- **Automated Remediation**: Self-healing actions for common failure patterns
-- **Cost Analysis**: Track cloud spend from unnecessary reruns
-- **Pattern Library**: Pre-built detectors for flaky tests, OOM, race conditions
-- **Multi-Platform Support**: GitHub Actions, GitLab CI, Jenkins, CircleCI
-- **ROI Dashboard**: Measure time saved and reliability improvements
+1. **Detects** which steps failed (FAIL or TIMEOUT status)
+2. **Classifies** the failure by scanning `error_output` with regex patterns
+3. **Selects** an ordered remediation playbook for that failure category
+4. **Attempts** each action in order (via a pluggable hook) until the step heals
+5. **Prevents infinite loops** by tracking (step, category) retry history
+6. **Reports** a structured `HealingReport` with what happened to every step
 
-## 📋 Table of Contents
+---
 
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Architecture](#architecture)
-- [Configuration](#configuration)
-- [Remediation Strategies](#remediation-strategies)
-- [Pattern Library](#pattern-library)
-- [Monitoring](#monitoring)
-- [API Reference](#api-reference)
-- [Contributing](#contributing)
+## Failure categories
 
-## 🚀 Installation
+| Category | Example triggers |
+|---|---|
+| `TEST_FAILURE` | `pytest: 2 failed`, `AssertionError` |
+| `BUILD_ERROR` | `compilation error`, `SyntaxError`, `make error` |
+| `DEPENDENCY_MISSING` | `ModuleNotFoundError`, `npm ERR! 404`, `ImportError` |
+| `TIMEOUT` | `timed out`, `deadline exceeded`, `TIMEOUT` status |
+| `FLAKY_TEST` | `flaky`, `race condition`, `intermittent` |
+| `OOM` | `out of memory`, `OutOfMemoryError`, `malloc failed` |
+| `LINT_ERROR` | `eslint`, `flake8`, `mypy error` |
+| `UNKNOWN` | No pattern matched |
 
-### As a GitHub Action
+## Remediation playbooks (defaults)
 
-Add to `.github/workflows/your-workflow.yml`:
+| Category | Actions (in order) |
+|---|---|
+| TEST_FAILURE | retry → clear_cache → notify_team |
+| BUILD_ERROR | clear_cache → retry → notify_team |
+| DEPENDENCY_MISSING | install_dep → retry → notify_team |
+| TIMEOUT | increase_timeout → retry → notify_team |
+| FLAKY_TEST | rerun_flaky → retry → notify_team |
+| OOM | increase_memory → retry → notify_team |
+| LINT_ERROR | fix_lint → retry → notify_team |
+| UNKNOWN | retry → notify_team |
 
-```yaml
-name: CI with Self-Healing
+---
 
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Run Tests
-        id: tests
-        run: |
-          npm test
-          
-      - name: Self-Healing Guard
-        if: failure()
-        uses: your-org/self-healing-pipeline-guard@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          strategy: 'auto-detect'
-          max-retries: 3
-          
-          # Optional integrations
-          slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
-          jira-token: ${{ secrets.JIRA_TOKEN }}
-          pagerduty-token: ${{ secrets.PAGERDUTY_TOKEN }}
-```
-
-### As a Python Library
-
-```bash
-pip install self-healing-pipeline-guard
-```
-
-### For GitLab CI
-
-Add to `.gitlab-ci.yml`:
-
-```yaml
-include:
-  - remote: 'https://your-org.com/self-healing-guard/gitlab-template.yml'
-
-variables:
-  HEALING_STRATEGY: "progressive"
-  HEALING_MAX_RETRIES: 3
-```
-
-## ⚡ Quick Start
-
-### Basic GitHub Action Setup
-
-1. Create `.github/healing-config.yml`:
-
-```yaml
-healing:
-  strategies:
-    - name: "flaky-test-detector"
-      enabled: true
-      threshold: 0.3  # 30% failure rate
-      action: "retry-with-backoff"
-      
-    - name: "oom-detector"
-      enabled: true
-      action: "increase-resources"
-      
-    - name: "dependency-failure"
-      enabled: true
-      action: "clear-cache-retry"
-      
-  notifications:
-    slack:
-      channel: "#ci-alerts"
-      on_recovery: true
-      on_failure: true
-      
-  cost_tracking:
-    enabled: true
-    alert_threshold: 100  # Alert if healing costs > $100/day
-    
-  escalation:
-    after_failures: 3
-    create_ticket: true
-    assign_to: "@oncall"
-```
-
-2. The guard automatically activates on pipeline failures!
-
-### Python Library Usage
+## Quick start
 
 ```python
-from healing_guard import PipelineGuard, Strategy
+from pipeline_guard import (
+    PipelineStep, StepStatus,
+    PipelineGuard, RemediationAction,
+)
 
-# Initialize guard
+# Define your pipeline steps (populate from CI API / webhook payload)
+steps = [
+    PipelineStep("lint",  StepStatus.PASS, duration_s=4.1),
+    PipelineStep("build", StepStatus.PASS, duration_s=92.3),
+    PipelineStep("test",  StepStatus.FAIL, duration_s=120.0,
+                 error_output="pytest: 3 failed, 47 passed\nAssertionError: expected 200 got 500"),
+    PipelineStep("deps",  StepStatus.FAIL, duration_s=8.0,
+                 error_output="ModuleNotFoundError: No module named 'httpx'"),
+]
+
+# Plug in your actual remediation logic
+def my_hook(step, action):
+    if action == RemediationAction.RETRY:
+        success = rerun_step_in_ci(step.name)   # your CI call here
+        return StepStatus.PASS if success else StepStatus.FAIL
+    if action == RemediationAction.INSTALL_DEP:
+        run_cmd("pip install -r requirements.txt")
+    if action == RemediationAction.CLEAR_CACHE:
+        run_cmd("rm -rf .cache __pycache__")
+    return step.status  # not yet healed
+
 guard = PipelineGuard(
-    ci_provider="github",
-    repo="your-org/your-repo"
+    pipeline_name="my-service-ci",
+    remediation_hook=my_hook,
+    max_retries_per_step=3,
 )
-
-# Configure strategies
-guard.add_strategy(
-    Strategy.FLAKY_TEST_RETRY,
-    confidence_threshold=0.8,
-    max_retries=3
-)
-
-# Analyze failure
-failure = guard.analyze_failure(
-    job_id="12345",
-    logs=failure_logs
-)
-
-# Execute healing
-result = guard.heal(failure)
-print(f"Healing result: {result.status}")
-print(f"Time saved: {result.time_saved_minutes} minutes")
+report = guard.run(steps)
+print(report.summary())
+print(report.to_json())
 ```
 
-## 🏗️ Architecture
+### Example healing report output
 
-```mermaid
-graph TB
-    subgraph "CI/CD Pipeline"
-        A[Job Execution] --> B{Failure Detected}
-        B -->|Yes| C[Guard Webhook]
-    end
-    
-    subgraph "Self-Healing Guard"
-        C --> D[Failure Analyzer]
-        D --> E{Pattern Matcher}
-        
-        E -->|Flaky Test| F[Retry Strategy]
-        E -->|OOM| G[Resource Strategy]
-        E -->|Network| H[Backoff Strategy]
-        E -->|Unknown| I[Escalation Strategy]
-        
-        F & G & H --> J[Remediation Engine]
-        J --> K[Execute Fix]
-        
-        I --> L[Create Incident]
-    end
-    
-    subgraph "Observability"
-        K --> M[ROI Calculator]
-        M --> N[Lang-Observatory]
-        L --> O[Jira/ServiceNow]
-    end
+```
+=== Healing Report: my-service-ci ===
+Status      : ✅ FULLY HEALED
+Total steps : 4
+Failed      : 2
+Healed      : 2
+
+--- Step Details ---
+  ✅ [test]  category=TEST_FAILURE  actions=['retry', 'clear_cache']  final=PASS
+  ✅ [deps]  category=DEPENDENCY_MISSING  actions=['install_dep', 'retry']  final=PASS
 ```
 
-## ⚙️ Configuration
-
-### Strategy Configuration
-
-Create `.github/healing-strategies.yml`:
-
-```yaml
-strategies:
-  flaky_test_detector:
-    enabled: true
-    ml_model: "gradient_boost"  # or "neural_net"
-    features:
-      - "test_name"
-      - "failure_rate"
-      - "time_of_day"
-      - "recent_commits"
-    thresholds:
-      confidence: 0.75
-      historical_failures: 3
-    actions:
-      primary: "retry_with_isolation"
-      fallback: "skip_and_notify"
-      
-  resource_exhaustion:
-    enabled: true
-    patterns:
-      - "Cannot allocate memory"
-      - "No space left on device"
-      - "OOMKilled"
-    actions:
-      - increase_memory: "+2GB"
-      - clear_caches: true
-      - scale_horizontally: true
-      
-  dependency_conflicts:
-    enabled: true
-    detection_method: "semantic_diff"
-    actions:
-      - clear_package_cache: true
-      - pin_dependencies: true
-      - isolate_environment: true
-```
-
-### Cost Control Configuration
-
-```yaml
-cost_control:
-  enabled: true
-  
-  limits:
-    daily_budget: 500  # USD
-    per_repo_budget: 50
-    per_job_retry_limit: 10
-    
-  optimization:
-    prefer_spot_instances: true
-    downgrade_after_failures: 2
-    cache_aggressive: true
-    
-  alerts:
-    slack: "#cost-alerts"
-    threshold_percentages: [50, 80, 95]
-    
-  reporting:
-    export_to: "lang-observatory"
-    granularity: "hourly"
-```
-
-## 🔧 Remediation Strategies
-
-### Built-in Strategies
-
-| Strategy | Detection | Action | Success Rate |
-|----------|-----------|--------|--------------|
-| `flaky-test-retry` | Test fails < 50% of time | Retry with isolation | 89% |
-| `oom-recovery` | Memory errors in logs | Increase resources | 94% |
-| `network-backoff` | Connection timeouts | Exponential backoff | 87% |
-| `cache-corruption` | Checksum mismatches | Clear and rebuild | 91% |
-| `race-condition` | Timing-dependent failures | Sequential execution | 85% |
-| `dependency-hell` | Version conflicts | Pin and isolate | 88% |
-
-### Custom Strategy Example
-
-```python
-from healing_guard import CustomStrategy, RemediationAction
-
-class MonorepoStrategy(CustomStrategy):
-    """Handle monorepo-specific failures."""
-    
-    def detect(self, failure_context):
-        # Detect if failure is in changed packages only
-        changed_packages = self.get_changed_packages(
-            failure_context.commit_range
-        )
-        failed_packages = self.extract_failed_packages(
-            failure_context.logs
-        )
-        
-        return bool(failed_packages & changed_packages)
-    
-    def remediate(self, failure_context):
-        # Only rebuild affected packages
-        affected = self.get_affected_packages(failure_context)
-        
-        return RemediationAction(
-            type="selective-rebuild",
-            params={
-                "packages": affected,
-                "parallel": True,
-                "cache": "warm"
-            }
-        )
-
-# Register custom strategy
-guard.register_strategy(MonorepoStrategy())
-```
-
-## 📊 Pattern Library
-
-### Flaky Test Patterns
-
-```yaml
-patterns:
-  timing_sensitive:
-    regex: "(timeout|deadline|elapsed)"
-    indicators:
-      - "assertion failed after \\d+ms"
-      - "expected .* within \\d+ seconds"
-    remediation:
-      - increase_timeout: 2x
-      - add_retry_logic: true
-      
-  external_dependency:
-    regex: "(connection refused|service unavailable)"
-    indicators:
-      - "failed to connect to"
-      - "HTTP 5\\d\\d"
-    remediation:
-      - mock_external_services: true
-      - add_circuit_breaker: true
-```
-
-### Infrastructure Patterns
-
-```yaml
-patterns:
-  docker_layer_cache:
-    indicators:
-      - "layer does not exist"
-      - "blob unknown"
-    remediation:
-      - rebuild_without_cache: true
-      
-  disk_pressure:
-    indicators:
-      - "no space left on device"
-      - "disk quota exceeded"
-    remediation:
-      - cleanup_artifacts: true
-      - prune_docker: true
-      - expand_volume: "+10GB"
-```
-
-## 📈 Monitoring
-
-### ROI Dashboard
-
-The guard automatically tracks and reports:
-
-- **Time Saved**: Minutes of developer time saved
-- **Cost Reduction**: Cloud costs avoided through smart retries
-- **Reliability Improvement**: MTTR and success rate changes
-- **Pattern Insights**: Most common failure types
-
-Access at: `https://your-org.com/healing-dashboard`
-
-### Metrics Exported
-
-```yaml
-metrics:
-  # Healing effectiveness
-  healing_guard_recovery_rate
-  healing_guard_time_saved_minutes
-  healing_guard_cost_saved_usd
-  
-  # Failure patterns
-  healing_guard_failure_classification
-  healing_guard_flaky_test_detection
-  
-  # Performance
-  healing_guard_analysis_duration_seconds
-  healing_guard_remediation_duration_seconds
-```
-
-## 📚 API Reference
-
-### REST API
-
-```bash
-# Get healing status
-GET /api/v1/repos/{owner}/{repo}/healing/status
-
-# Get failure analysis
-GET /api/v1/repos/{owner}/{repo}/failures/{job_id}/analysis
-
-# Trigger manual healing
-POST /api/v1/repos/{owner}/{repo}/failures/{job_id}/heal
+```json
 {
-  "strategy": "aggressive",
-  "notify": true
+  "pipeline_name": "my-service-ci",
+  "total_steps": 4,
+  "failed_steps": 2,
+  "healed_steps": 2,
+  "fully_healed": true,
+  "records": [
+    {
+      "step": "test",
+      "original_status": "FAIL",
+      "category": "TEST_FAILURE",
+      "matched_pattern": "pytest.*fail",
+      "actions_tried": ["retry", "clear_cache"],
+      "final_status": "PASS",
+      "healed": true,
+      "loop_aborted": false
+    },
+    {
+      "step": "deps",
+      "original_status": "FAIL",
+      "category": "DEPENDENCY_MISSING",
+      "matched_pattern": "ModuleNotFoundError",
+      "actions_tried": ["install_dep", "retry"],
+      "final_status": "PASS",
+      "healed": true,
+      "loop_aborted": false
+    }
+  ]
 }
 ```
 
-### Python SDK
+---
+
+## Loop prevention
+
+`PipelineGuard` tracks `(step_name, category)` → attempt count.  
+Once a step+category pair hits `max_retries_per_step` (default: 3), further retries are **aborted** — the `HealingReport` record will have `loop_aborted=True`.
+
+Call `guard.reset_history()` between pipeline runs to reset the counter.
+
+---
+
+## Custom playbooks
 
 ```python
-from healing_guard import GuardClient
+from pipeline_guard import RemediationStrategy, RemediationAction
+from pipeline_guard.analyzer import FailureCategory
 
-client = GuardClient(api_key="your-key")
-
-# Get repository health
-health = client.get_repo_health("your-org/your-repo")
-print(f"Flaky test rate: {health.flaky_rate}%")
-print(f"Self-healing success: {health.healing_success_rate}%")
-
-# Analyze specific failure
-analysis = client.analyze_failure(
-    repo="your-org/your-repo",
-    job_id="12345"
+strategy = RemediationStrategy(
+    custom_playbooks={
+        FailureCategory.FLAKY_TEST: [
+            RemediationAction.RERUN_FLAKY,
+            RemediationAction.NOTIFY_TEAM,
+        ]
+    }
 )
-
-# Get recommendations
-for rec in analysis.recommendations:
-    print(f"- {rec.action}: {rec.confidence}% confidence")
+guard = PipelineGuard(strategy=strategy, ...)
 ```
 
-## 🤝 Contributing
+---
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-### Development Setup
+## Running tests
 
 ```bash
-# Clone repository
-git clone https://github.com/your-org/self-healing-pipeline-guard
-cd self-healing-pipeline-guard
-
-# Install dependencies
-poetry install --with dev
-
-# Run tests
-pytest tests/ -v
-
-# Run linting
-black . && flake8 . && mypy .
+python -m pytest tests/ -v
 ```
 
-## 📄 License
+43 tests, stdlib only, no external dependencies.
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+---
 
-## 🔗 Related Projects
+## Project structure
 
-- [Lang-Observatory](https://github.com/your-org/lang-observatory) - Observability platform
-- [Claude-Flow](https://github.com/your-org/claude-flow) - Agent orchestration
-- [Pipeline-Analyzer](https://github.com/your-org/pipeline-analyzer) - Deep pipeline analytics
+```
+pipeline_guard/
+  models.py        # PipelineStep, StepStatus
+  analyzer.py      # FailureClassifier (pattern matching → FailureCategory)
+  remediation.py   # RemediationStrategy (category → action list)
+  guard.py         # PipelineGuard (orchestration + loop prevention)
+  report.py        # HealingReport, StepHealingRecord
+tests/
+  test_pipeline_guard.py   # 43 tests
+```
 
-## 📞 Support
+## License
 
-- 📧 Email: devops-ai@your-org.com
-- 💬 Discord: [Join our community](https://discord.gg/your-org)
-- 📖 Documentation: [Full docs](https://docs.your-org.com/healing-guard)
-- 🎫 Issues: [GitHub Issues](https://github.com/your-org/self-healing-pipeline-guard/issues)
+MIT
